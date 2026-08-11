@@ -43,6 +43,13 @@ executes them via CDP and returns the result.
 
 ## Install
 
+AgentBrowser has two local pieces that must come from the **same checkout**:
+
+- `extension/` runs in Chrome and is the only component allowed to control
+  tabs through `chrome.debugger`.
+- `server/` is the local companion hub. It starts a selected coding CLI and
+  exposes the MCP proxy to Codex and other harnesses.
+
 ```bash
 git clone https://github.com/VasiHemanth/agentbrowser.git
 cd agentbrowser/server
@@ -53,18 +60,60 @@ npm start          # listens on ws://127.0.0.1:9010
 Then load the extension:
 
 1. Open `chrome://extensions` and enable Developer mode.
-2. Load unpacked, and select the `extension/` directory of this repo.
-3. Click the AgentBrowser toolbar icon. The side panel opens; the status dot
+2. Disable or remove every other unpacked copy named **AgentBrowser**. Two
+   copies on the same port continuously displace each other.
+3. Load unpacked, and select **this checkout's** `extension/` directory.
+4. Click the AgentBrowser toolbar icon. The side panel opens; the status dot
    turns green when the hub is reachable.
 
+Keep exactly one extension connected to one hub. In this checkout the three
+paths must agree:
+
+```text
+extension: extension/
+hub:       server/hub.mjs
+MCP proxy: server/mcp-proxy.mjs
+```
+
+The extension cannot inspect a user's PATH or discover installed coding CLIs;
+that belongs to the local hub. It resolves a selected CLI from `PATH` (plus a
+few common macOS locations) when a chat starts. If a GUI-launched hub cannot
+find yours, set `AGENTCHAT_BIN_<NAME>` to its absolute path, for example
+`AGENTCHAT_BIN_CODEX=/opt/homebrew/bin/codex`.
+
+The status dot should stay green. If it flips green/red about every three
+seconds and the hub log contains `extension displaced by new connection`,
+unload the duplicate extension in `chrome://extensions`; a normal Codex or
+OpenCode MCP connection does not displace the extension.
+
 Type a message, pick an adapter from the dropdown if you don't want the
-default from `server/config.json`, and send. Tool activity shows up as
-compact chips in the transcript.
+default from `server/config.json`, and send. Tool activity shows up as compact
+chips in the transcript.
 
 Override the port with `AGENTCHAT_PORT`. To keep the hub running across
 logins, [server/autostart.md](server/autostart.md) has a launchd recipe for
-macOS; the plist lives outside the repo. Logs go to `/tmp/agentchat-hub.log`.
-If the hub reports the port is in use, an autostarted copy is already running.
+macOS. Logs go to `/tmp/agentbrowser-hub.log` when started by that recipe.
+If the hub reports the port is in use, another local hub is already running.
+
+## Use Codex or another external harness
+
+The Chrome extension stays responsible for browser control; the coding harness
+connects to the hub through the stdio MCP proxy. It is not necessary to open a
+second AgentBrowser extension for each harness.
+
+```text
+Codex / OpenCode / other MCP client
+              │ stdio
+       server/mcp-proxy.mjs
+              │ WebSocket, localhost only
+         server/hub.mjs
+              │
+        one Chrome extension
+```
+
+Use the Codex command in [Codex setup](#codex-setup) after the hub is running.
+For a safe first check, ask Codex to list open tabs or open a new tab; it should
+not need the side-panel chat to control the browser.
 
 ## Picking a model
 

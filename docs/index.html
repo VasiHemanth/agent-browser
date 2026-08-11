@@ -381,18 +381,18 @@
 <section id="install">
   <div class="wrap">
     <p class="kicker">Install</p>
-    <h2>Running in about a minute.</h2>
+    <h2>One extension, one local hub.</h2>
 <pre><span class="c">$</span> git clone https://github.com/VasiHemanth/agentbrowser.git
 <span class="c">$</span> cd agentbrowser/server
 <span class="c">$</span> npm install
 <span class="c">$</span> npm start          <span class="c"># listens on ws://127.0.0.1:9010</span></pre>
     <ol class="steps">
       <li>Open <code>chrome://extensions</code> and enable Developer mode.</li>
-      <li>Choose Load unpacked and select the repo's <code>extension/</code> directory.</li>
-      <li>Click the AgentBrowser toolbar icon to open the side panel.</li>
-      <li>The status dot turns green when the hub is reachable. Send a message.</li>
+      <li>Disable every other unpacked extension named <strong>AgentBrowser</strong>.</li>
+      <li>Choose Load unpacked and select this repo's <code>extension/</code> directory.</li>
+      <li>Click the AgentBrowser toolbar icon. The status dot stays green when the local hub is reachable.</li>
     </ol>
-    <p class="muted" style="margin-top:18px">Requires Chrome and Node.js 20.11 or newer. MIT licensed.</p>
+    <p class="muted" style="margin-top:18px">The Chrome extension controls tabs. The local hub finds and starts your selected coding CLI, while Codex and other MCP clients connect through <code>server/mcp-proxy.mjs</code>. Requires Chrome and Node.js 20.11 or newer. MIT licensed.</p>
   </div>
 </section>
 
@@ -403,7 +403,8 @@
     <ul class="plain">
       <li>Chrome allows one debugger client per tab. With DevTools open on a tab, tool calls on that tab fail until it detaches.</li>
       <li>Chrome shows an "is being debugged" infobar while attached. Dismissing it detaches; the next tool call re-attaches.</li>
-      <li>The hub accepts one extension connection. A second Chrome profile displaces the first.</li>
+      <li>The hub accepts one extension connection. A second loaded AgentBrowser copy displaces the first and makes the status dot reconnect every three seconds. Unload the duplicate in <code>chrome://extensions</code>.</li>
+      <li>Harness connections are separate from the extension connection. Codex or OpenCode may connect and disconnect normally without interrupting browser control.</li>
       <li>Filling a form is not permission to submit it. The agent will not click submit, send, post or buy unless you asked.</li>
       <li>API keys sit in <code>~/.agentchat/keys.json</code> in plain text, protected by file permissions, not encrypted.</li>
     </ul>
