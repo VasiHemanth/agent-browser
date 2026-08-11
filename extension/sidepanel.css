@@ -1,0 +1,1225 @@
+/* AgentBrowser side panel. Every value here comes from agentchat/DESIGN.md; use a
+   token, not a literal. The exceptions are the per-component optical paddings
+   DESIGN.md section 4 licenses (5px 12px on a ghost button, 4px 10px in a table
+   cell) and the density-mandate values it fixes by name (10px 12px on pre). */
+
+:root {
+  /* surface */
+  --ac-bg-0: #0b0f0d;
+  --ac-bg-1: #0f1512;
+  --ac-bg-2: #141c18;
+  --ac-border: #1f2b25;
+  --ac-border-soft: #17211c;
+
+  /* text */
+  --ac-text: #dbe5df;
+  --ac-text-secondary: #9aa8a0;
+  --ac-text-muted: #6f7d75;
+
+  /* accent */
+  --ac-accent: #22c55e;
+  --ac-accent-hover: #2ee06d;
+  --ac-accent-pressed: #16a34a;
+  --ac-accent-tint: rgba(34, 197, 94, 0.13);
+  --ac-accent-tint-strong: rgba(34, 197, 94, 0.22);
+  --ac-on-accent: #06210f;
+
+  /* state */
+  --ac-success: #22c55e;
+  --ac-error: #f87171;
+  --ac-error-bg: rgba(248, 113, 113, 0.12);
+  --ac-error-border: rgba(248, 113, 113, 0.4);
+  --ac-warn: #d9a441;
+  --ac-warn-bg: rgba(217, 164, 65, 0.12);
+  --ac-warn-border: rgba(217, 164, 65, 0.4);
+  --ac-focus-ring: #22c55e;
+
+  /* type */
+  --ac-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ac-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --ac-font-features: "cv05" 1, "ss01" 1;
+  --ac-type-title: 600 16.5px/1.35 var(--ac-font);
+  --ac-type-body: 400 15px/1.6 var(--ac-font);
+  --ac-type-secondary: 400 13px/1.5 var(--ac-font);
+  --ac-type-code: 400 13px/1.55 var(--ac-font-mono);
+  --ac-type-micro: 500 11.5px/1.4 var(--ac-font);
+
+  /* space */
+  --ac-space-4: 4px;
+  --ac-space-8: 8px;
+  --ac-space-10: 10px;
+  --ac-space-12: 12px;
+  --ac-space-14: 14px;
+  --ac-space-16: 16px;
+  --ac-space-20: 20px;
+  --ac-space-24: 24px;
+
+  /* shape */
+  --ac-radius-control: 6px;
+  --ac-radius-card: 10px;
+  --ac-radius-pill: 999px;
+  --ac-shadow-card: 0 8px 24px rgba(0, 0, 0, 0.55);
+
+  /* motion */
+  --ac-dur-fast: 120ms;
+  --ac-dur-base: 200ms;
+  --ac-dur-exit: 400ms;
+  --ac-ease: cubic-bezier(0.2, 0, 0.2, 1);
+  --ac-ease-loop: ease-in-out;
+  --ac-loop-mic: 1100ms;
+  --ac-loop-status: 1600ms;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* The panel hides rows and buttons with the `hidden` attribute, but the UA rule
+   that backs it (`[hidden] { display: none }`) sits in the user-agent origin and
+   loses to any author `display`. .chip-row and .icon-btn both set one, so
+   #chips, #attachments and #mic would stay laid out while hidden. Author origin
+   plus !important, because [hidden] and .chip-row tie on specificity. */
+[hidden] {
+  display: none !important;
+}
+
+/* Nothing scrolls the panel sideways: wide content scrolls inside its own box
+   (pre, .md-table-wrap) and long tokens break. clip rather than hidden here,
+   where overflow-y stays visible, so neither axis becomes a scroll container. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow-x: clip;
+}
+
+/* No webfonts are available to an MV3 page, so the richer feel comes from the
+   system faces themselves: the ui-* generics first, the stylistic sets the
+   modern system faces ship, and antialiased rendering on the dark surface. */
+body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--ac-bg-0);
+  color: var(--ac-text);
+  font: var(--ac-type-body);
+  font-feature-settings: var(--ac-font-features);
+  -webkit-font-smoothing: antialiased;
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ac-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ----- header ----- */
+
+/* Wraps rather than clips: adapter, model, settings and New chat do not fit on
+   one line once the panel is dragged narrow. */
+#header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ac-space-8);
+  min-width: 0;
+  padding: var(--ac-space-10) var(--ac-space-12);
+  border-bottom: 1px solid var(--ac-border-soft);
+  background: var(--ac-bg-1);
+  flex: none;
+}
+
+#logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--ac-radius-control);
+  background: var(--ac-accent-tint);
+  color: var(--ac-accent);
+  flex: none;
+}
+
+#title {
+  margin: 0;
+  font: var(--ac-type-title);
+  letter-spacing: 0.1px;
+  color: var(--ac-text);
+  flex: none;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.dot.up {
+  background: var(--ac-accent);
+  box-shadow: 0 0 0 3px var(--ac-accent-tint);
+}
+
+/* Connected and working. The only looping motion in the header. */
+.dot.up.working {
+  animation: ac-dot-live var(--ac-loop-status) var(--ac-ease-loop) infinite;
+}
+
+.dot.down {
+  background: var(--ac-error);
+  box-shadow: 0 0 0 3px var(--ac-error-bg);
+}
+
+@keyframes ac-dot-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+#adapter,
+#model {
+  min-width: 0;
+  max-width: 160px;
+  background: var(--ac-bg-2);
+  color: var(--ac-text-secondary);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius-control);
+  padding: var(--ac-space-4) var(--ac-space-8);
+  font: var(--ac-type-secondary);
+  transition: border-color var(--ac-dur-fast) var(--ac-ease);
+}
+
+#model {
+  max-width: 140px;
+}
+
+#adapter:hover,
+#model:hover {
+  border-color: var(--ac-accent-pressed);
+}
+
+/* ----- buttons: ghost text is the default variant ----- */
+
+button {
+  background: transparent;
+  color: var(--ac-text);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius-control);
+  padding: 5px var(--ac-space-12);
+  font: var(--ac-type-secondary);
+  cursor: pointer;
+  flex: none;
+  transition:
+    color var(--ac-dur-fast) var(--ac-ease),
+    background-color var(--ac-dur-fast) var(--ac-ease),
+    border-color var(--ac-dur-fast) var(--ac-ease),
+    opacity var(--ac-dur-fast) var(--ac-ease);
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--ac-accent-pressed);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* destructive */
+#abort {
+  color: var(--ac-error);
+  border-color: var(--ac-error-border);
+}
+
+#abort:hover:not(:disabled) {
+  background: var(--ac-error-bg);
+  border-color: var(--ac-error-border);
+}
+
+/* ----- banner ----- */
+
+#banner {
+  flex: none;
+  padding: var(--ac-space-8) var(--ac-space-12);
+  background: var(--ac-error-bg);
+  color: var(--ac-error);
+  border-bottom: 1px solid var(--ac-error-border);
+  font: var(--ac-type-secondary);
+}
+
+/* ----- message list ----- */
+
+#messages {
+  flex: 1;
+  min-width: 0;
+  /* clip computes to hidden next to overflow-y: auto, which is what DESIGN.md
+     section 9 asks for; it is written as clip so the pair stays one intent. */
+  overflow-y: auto;
+  overflow-x: clip;
+  padding: var(--ac-space-20) var(--ac-space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ac-space-16);
+}
+
+.msg {
+  max-width: 100%;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* The margin-right is the resend button's gutter: the button sits outside the
+   card by --ac-space-4 and still lands inside the list's padding box. */
+.msg.user {
+  position: relative;
+  align-self: flex-end;
+  max-width: 85%;
+  margin-right: var(--ac-space-24);
+  background: var(--ac-accent-tint);
+  border: 1px solid var(--ac-border);
+  border-radius: 10px 10px 4px 10px;
+  padding: var(--ac-space-10) var(--ac-space-14);
+  font: var(--ac-type-body);
+}
+
+.msg-text {
+  display: block;
+  min-width: 0;
+}
+
+.msg-meta {
+  margin-top: var(--ac-space-4);
+  font: var(--ac-type-micro);
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ac-text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.msg.assistant {
+  align-self: stretch;
+  padding: 0;
+  /* Rendered markdown carries its own line breaks; pre-wrap would double them
+     and keep source indentation. Flex items default to min-width:auto, which
+     would let a wide table or code block stretch the panel instead of
+     scrolling inside it. */
+  white-space: normal;
+  min-width: 0;
+}
+
+/* Cursor rides inside the last rendered block so it sits after the text
+   instead of dropping onto a line of its own below it. */
+.msg.assistant.streaming:empty::after,
+.msg.assistant.streaming > :last-child::after {
+  content: "\258B";
+  color: var(--ac-accent);
+  animation: ac-blink var(--ac-loop-status) var(--ac-ease-loop) infinite;
+}
+
+@keyframes ac-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* Fallback when the markdown renderer throws: raw source, breaks intact. */
+.msg.assistant.raw {
+  white-space: pre-wrap;
+}
+
+/* ----- rendered markdown ----- */
+
+.msg.assistant > :first-child {
+  margin-top: 0;
+}
+
+.msg.assistant > :last-child {
+  margin-bottom: 0;
+}
+
+.msg.assistant p {
+  margin: 0 0 var(--ac-space-10);
+}
+
+.msg.assistant h1,
+.msg.assistant h2,
+.msg.assistant h3,
+.msg.assistant h4,
+.msg.assistant h5,
+.msg.assistant h6 {
+  margin: var(--ac-space-16) 0 var(--ac-space-8);
+  font-weight: 600;
+}
+
+.msg.assistant h1,
+.msg.assistant h2 {
+  font: var(--ac-type-title);
+  letter-spacing: 0.1px;
+}
+
+.msg.assistant h3,
+.msg.assistant h4,
+.msg.assistant h5,
+.msg.assistant h6 {
+  font: var(--ac-type-body);
+  font-weight: 600;
+}
+
+.msg.assistant h4,
+.msg.assistant h5,
+.msg.assistant h6 {
+  color: var(--ac-text-secondary);
+}
+
+.msg.assistant code {
+  font: var(--ac-type-code);
+  background: var(--ac-bg-2);
+  border: 1px solid var(--ac-border-soft);
+  border-radius: var(--ac-radius-control);
+  padding: 0 var(--ac-space-4);
+  overflow-wrap: anywhere;
+}
+
+.msg.assistant pre {
+  margin: 0 0 var(--ac-space-10);
+  padding: var(--ac-space-10) var(--ac-space-12);
+  background: var(--ac-bg-2);
+  border: 1px solid var(--ac-border-soft);
+  border-radius: var(--ac-radius-card);
+  overflow-x: auto;
+  max-width: 100%;
+  font: var(--ac-type-code);
+}
+
+.msg.assistant pre code {
+  display: block;
+  background: none;
+  border: 0;
+  padding: 0;
+  border-radius: 0;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.msg.assistant ul,
+.msg.assistant ol {
+  margin: 0 0 var(--ac-space-10);
+  padding-left: var(--ac-space-20);
+}
+
+.msg.assistant li {
+  margin: var(--ac-space-4) 0;
+}
+
+.msg.assistant li > ul,
+.msg.assistant li > ol {
+  margin: var(--ac-space-4) 0 0;
+}
+
+.msg.assistant blockquote {
+  margin: 0 0 var(--ac-space-10);
+  padding: 0 0 0 var(--ac-space-12);
+  border-left: 1px solid var(--ac-border);
+  color: var(--ac-text-secondary);
+}
+
+.msg.assistant hr {
+  margin: var(--ac-space-24) 0;
+  border: 0;
+  border-top: 1px solid var(--ac-border);
+}
+
+.msg.assistant a {
+  color: var(--ac-accent);
+  overflow-wrap: anywhere;
+}
+
+.md-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 0 var(--ac-space-10);
+}
+
+.msg.assistant table {
+  border-collapse: collapse;
+  font: var(--ac-type-code);
+}
+
+.msg.assistant th,
+.msg.assistant td {
+  border: 1px solid var(--ac-border);
+  padding: var(--ac-space-4) 10px;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.msg.assistant th {
+  background: var(--ac-bg-2);
+  font-weight: 600;
+}
+
+/* ----- tool chip: one full-width row, not a bubble ----- */
+
+.chip {
+  align-self: stretch;
+  max-width: 100%;
+  min-width: 0;
+  background: var(--ac-bg-2);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius-control);
+  padding: 6px 10px;
+  font: var(--ac-type-code);
+  color: var(--ac-text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chip .chip-name {
+  color: var(--ac-text);
+}
+
+.chip .chip-ok {
+  color: var(--ac-success);
+}
+
+.chip .chip-err {
+  color: var(--ac-error);
+}
+
+.chip .chip-pending {
+  color: var(--ac-warn);
+  animation: ac-blink var(--ac-loop-status) var(--ac-ease-loop) infinite;
+}
+
+/* ----- status lines ----- */
+
+.line {
+  min-width: 0;
+  font: var(--ac-type-secondary);
+  overflow-wrap: anywhere;
+}
+
+.line.info {
+  color: var(--ac-text-secondary);
+  font-style: italic;
+}
+
+.line.error {
+  color: var(--ac-error);
+}
+
+/* ----- one assistant turn: work block, reply, actions, meta ----- */
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: var(--ac-space-8);
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* The live "cooking" block. One per turn; every tool chip and every piece of
+   exposed reasoning for that turn lives inside it. */
+.work-block {
+  align-self: stretch;
+  max-width: 100%;
+  min-width: 0;
+  background: var(--ac-bg-1);
+  border: 1px solid var(--ac-border-soft);
+  border-radius: var(--ac-radius-card);
+}
+
+.work-head {
+  display: flex;
+  align-items: center;
+  gap: var(--ac-space-8);
+  width: 100%;
+  min-width: 0;
+  padding: var(--ac-space-8) var(--ac-space-12);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--ac-radius-card);
+  color: var(--ac-text-secondary);
+  font: var(--ac-type-secondary);
+  text-align: left;
+}
+
+.work-head:hover:not(:disabled) {
+  background: var(--ac-bg-2);
+  border-color: var(--ac-border);
+}
+
+.work-label {
+  color: var(--ac-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Motion reports state: the label breathes only while the turn is live. */
+.work-block.live .work-label {
+  animation: ac-shimmer var(--ac-loop-status) var(--ac-ease-loop) infinite;
+}
+
+.work-elapsed,
+.work-steps {
+  flex: none;
+  font: var(--ac-type-micro);
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ac-text-muted);
+}
+
+.work-caret {
+  flex: none;
+  color: var(--ac-text-muted);
+  transition: transform var(--ac-dur-fast) var(--ac-ease);
+}
+
+.work-block.open .work-caret {
+  transform: rotate(90deg);
+}
+
+.work-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ac-space-8);
+  min-width: 0;
+  padding: 0 var(--ac-space-12) var(--ac-space-12);
+}
+
+.work-thinking {
+  min-width: 0;
+  font: var(--ac-type-secondary);
+  font-style: italic;
+  color: var(--ac-text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@keyframes ac-shimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ----- parallel lanes -----
+   One /parallel run stacks its lanes vertically inside the turn. The panel is
+   about 360px and can be dragged to 240px, so lanes never sit side by side.
+   The block borrows the work block's recipe: same surface, same collapsed head,
+   same caret. */
+
+.lane-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ac-space-8);
+  align-self: stretch;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.lane-block {
+  align-self: stretch;
+  max-width: 100%;
+  min-width: 0;
+  background: var(--ac-bg-1);
+  border: 1px solid var(--ac-border-soft);
+  border-radius: var(--ac-radius-card);
+}
+
+.lane-head {
+  display: flex;
+  align-items: center;
+  gap: var(--ac-space-8);
+  width: 100%;
+  min-width: 0;
+  padding: var(--ac-space-8) var(--ac-space-12);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--ac-radius-card);
+  color: var(--ac-text-secondary);
+  font: var(--ac-type-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lane-head:hover {
+  color: var(--ac-text);
+}
+
+.lane-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lane-status {
+  flex: none;
+  font: var(--ac-type-micro);
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ac-text-muted);
+}
+
+.lane-block.live .lane-status {
+  animation: ac-shimmer var(--ac-loop-status) var(--ac-ease-loop) infinite;
+}
+
+.lane-block.failed .lane-status {
+  color: var(--ac-error);
+  animation: none;
+}
+
+.lane-caret {
+  flex: none;
+  color: var(--ac-text-muted);
+  transition: transform var(--ac-dur-fast) var(--ac-ease);
+}
+
+.lane-block.open .lane-caret {
+  transform: rotate(90deg);
+}
+
+.lane-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ac-space-8);
+  min-width: 0;
+  padding: 0 var(--ac-space-12) var(--ac-space-12);
+}
+
+/* Hover-revealed row under a finished reply. Hidden by opacity only, so it
+   stays in the tab order; .show pins it open when it carries a Retry. */
+.turn-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ac-space-8);
+  min-width: 0;
+  opacity: 0;
+  transition: opacity var(--ac-dur-fast) var(--ac-ease);
+}
+
+.turn:hover .turn-actions,
+.turn:focus-within .turn-actions,
+.turn-actions.show {
+  opacity: 1;
+}
+
+.act-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ac-space-4);
+  padding: 5px var(--ac-space-12);
+  min-height: 28px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ac-text-secondary);
+}
+
+.act-btn:hover:not(:disabled) {
+  background: var(--ac-bg-2);
+  border-color: var(--ac-border);
+  color: var(--ac-text);
+}
+
+.turn-meta {
+  min-width: 0;
+  font: var(--ac-type-micro);
+  letter-spacing: 0.3px;
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  color: var(--ac-text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* ----- retry affordance ----- */
+
+.retry-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ac-space-4);
+  margin-top: var(--ac-space-8);
+  padding: 5px var(--ac-space-12);
+  min-height: 28px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ac-text-secondary);
+}
+
+.retry-btn:hover:not(:disabled) {
+  background: var(--ac-bg-2);
+  border-color: var(--ac-border);
+  color: var(--ac-text);
+}
+
+/* The resend icon on a user turn: never visible at rest, always focusable. */
+.resend-btn {
+  position: absolute;
+  left: calc(100% + var(--ac-space-4));
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--ac-radius-control);
+  color: var(--ac-text-muted);
+  opacity: 0;
+}
+
+.msg.user:hover .resend-btn,
+.msg.user:focus-within .resend-btn,
+.resend-btn:focus-visible {
+  opacity: 1;
+}
+
+.resend-btn:hover:not(:disabled) {
+  background: var(--ac-bg-2);
+  border-color: var(--ac-border);
+  color: var(--ac-text);
+}
+
+/* ----- composer card ----- */
+
+#composer {
+  position: relative;
+  flex: none;
+  min-width: 0;
+  margin: 0 var(--ac-space-12) var(--ac-space-12);
+  padding: var(--ac-space-14);
+  background: var(--ac-bg-2);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius-card);
+  box-shadow: var(--ac-shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ac-space-8);
+  transition:
+    border-color var(--ac-dur-fast) var(--ac-ease),
+    background-color var(--ac-dur-fast) var(--ac-ease);
+}
+
+#composer:focus-within {
+  border-color: var(--ac-accent-pressed);
+}
+
+#composer.dragover {
+  border-color: var(--ac-accent);
+  background: var(--ac-accent-tint-strong);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ac-space-8);
+  min-width: 0;
+}
+
+.tab-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ac-space-4);
+  max-width: 100%;
+  min-width: 0;
+  background: var(--ac-bg-2);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius-pill);
+  padding: 3px var(--ac-space-4) 3px 10px;
+  font: var(--ac-type-secondary);
+  color: var(--ac-text-secondary);
+}
+
+.tab-chip.current {
+  border-color: var(--ac-accent-pressed);
+  color: var(--ac-text);
+}
+
+.tab-chip.off {
+  opacity: 0.65;
+  font-style: italic;
+}
+
+.tab-chip .tab-chip-mark {
+  color: var(--ac-accent);
+  flex: none;
+}
+
+.tab-chip .tab-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+
+.chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--ac-radius-pill);
+  color: var(--ac-text-muted);
+  font: var(--ac-type-secondary);
+  line-height: 1;
+  cursor: pointer;
+  flex: none;
+}
+
+/* :not(:disabled) only to outweigh the generic button:hover rule above. */
+.chip-x:hover:not(:disabled) {
+  color: var(--ac-error);
+  background: var(--ac-error-bg);
+  border-color: transparent;
+}
+
+.file-chip .tab-chip-mark {
+  color: var(--ac-text-muted);
+}
+
+.file-size {
+  color: var(--ac-text-muted);
+  font: var(--ac-type-micro);
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+.composer-error {
+  font: var(--ac-type-secondary);
+  color: var(--ac-error);
+  overflow-wrap: anywhere;
+}
+
+.interim {
+  font: var(--ac-type-secondary);
+  color: var(--ac-text-secondary);
+  font-style: italic;
+  opacity: 0.7;
+  max-height: 40px;
+  overflow: hidden;
+}
+
+#input {
+  width: 100%;
+  min-width: 0;
+  resize: none;
+  background: transparent;
+  color: var(--ac-text);
+  border: 0;
+  padding: 0;
+  font: var(--ac-type-body);
+  min-height: 24px;
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+#input:focus {
+  outline: none;
+}
+
+#input::placeholder {
+  color: var(--ac-text-muted);
+}
+
+#input:disabled {
+  opacity: 0.45;
+}
+
+#composer-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--ac-space-8);
+  min-width: 0;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: var(--ac-radius-control);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ac-text-secondary);
+}
+
+.icon-btn:hover:not(:disabled) {
+  color: var(--ac-text);
+  background: var(--ac-bg-2);
+  border-color: var(--ac-border);
+}
+
+/* Recording is not an agent state, so it must not read as accent green. */
+#mic.listening {
+  color: #fff;
+  background: #b91c1c;
+  border-color: #ef4444;
+  animation: ac-mic-pulse var(--ac-loop-mic) var(--ac-ease-loop) infinite;
+}
+
+@keyframes ac-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+  50% { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+}
+
+.send-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  background: var(--ac-accent);
+  border-color: var(--ac-accent);
+  color: var(--ac-on-accent);
+}
+
+.send-btn:hover:not(:disabled) {
+  background: var(--ac-accent-hover);
+  border-color: var(--ac-accent-hover);
+  color: var(--ac-on-accent);
+}
+
+.send-btn:active:not(:disabled) {
+  background: var(--ac-accent-pressed);
+  border-color: var(--ac-accent-pressed);
+}
+
+.send-btn:disabled {
+  background: var(--ac-bg-2);
+  border-color: var(--ac-border);
+  color: var(--ac-text-muted);
+  opacity: 0.6;
+}
+
+/* Usage readout pinned under the composer buttons. Monospace and tabular so
+   the digits stop jumping as they update mid-conversation. */
+.session-usage {
+  min-width: 0;
+  margin-top: var(--ac-space-8);
+  font: var(--ac-type-code);
+  font-variant-numeric: tabular-nums;
+  color: var(--ac-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ----- @ mention popup ----- */
+
+.mention-pop {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + var(--ac-space-4));
+  max-height: 220px;
+  overflow-y: auto;
+  overflow-x: clip;
+  background: var(--ac-bg-1);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius-card);
+  box-shadow: var(--ac-shadow-card);
+  padding: var(--ac-space-4);
+  z-index: 20;
+}
+
+.mention-row {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 6px var(--ac-space-8);
+  border-radius: var(--ac-radius-control);
+  cursor: pointer;
+  transition: background-color var(--ac-dur-fast) var(--ac-ease);
+}
+
+.mention-row.sel {
+  background: var(--ac-accent-tint);
+}
+
+.mention-title {
+  display: block;
+  font: var(--ac-type-body);
+  color: var(--ac-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mention-url {
+  display: block;
+  font: var(--ac-type-micro);
+  letter-spacing: 0.3px;
+  color: var(--ac-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mention-empty {
+  padding: var(--ac-space-8);
+  font: var(--ac-type-secondary);
+  color: var(--ac-text-muted);
+}
+
+/* ----- slash command palette (same popup, different rows) ----- */
+
+.cmd-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ac-space-8);
+  min-width: 0;
+}
+
+.cmd-name {
+  flex: none;
+  font: var(--ac-type-code);
+  color: var(--ac-text);
+}
+
+.cmd-args {
+  min-width: 0;
+  font: var(--ac-type-code);
+  color: var(--ac-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmd-summary {
+  display: block;
+  font: var(--ac-type-micro);
+  letter-spacing: 0.3px;
+  color: var(--ac-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ----- settings view (replaces the message list while open) ----- */
+
+#settings-view {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: clip;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ac-space-20);
+  padding: var(--ac-space-20) var(--ac-space-16);
+}
+
+.set-title {
+  margin: 0;
+  font: var(--ac-type-title);
+  letter-spacing: 0.1px;
+  color: var(--ac-text);
+}
+
+.set-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ac-space-8);
+  min-width: 0;
+}
+
+.set-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ac-space-8);
+  min-width: 0;
+}
+
+.set-label {
+  font: var(--ac-type-secondary);
+  color: var(--ac-text-secondary);
+  min-width: 0;
+}
+
+.set-state {
+  flex: none;
+  font: var(--ac-type-micro);
+  letter-spacing: 0.3px;
+  color: var(--ac-text-muted);
+}
+
+.set-state.on {
+  color: var(--ac-success);
+}
+
+/* width, never a px size: the panel narrows to about 240px. */
+.set-input {
+  width: 100%;
+  min-width: 0;
+  background: var(--ac-bg-2);
+  color: var(--ac-text);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius-control);
+  padding: var(--ac-space-8) var(--ac-space-10);
+  font: var(--ac-type-code);
+  transition: border-color var(--ac-dur-fast) var(--ac-ease);
+}
+
+.set-input:focus {
+  outline: none;
+  border-color: var(--ac-accent-pressed);
+}
+
+.set-input::placeholder {
+  color: var(--ac-text-muted);
+}
+
+.set-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ac-space-8);
+  min-width: 0;
+}
+
+.set-note {
+  margin: 0;
+  font: var(--ac-type-secondary);
+  color: var(--ac-text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* ----- reduced motion: state stays readable, nothing loops ----- */
+
+@media (prefers-reduced-motion: reduce) {
+  .dot.up.working,
+  .msg.assistant.streaming:empty::after,
+  .msg.assistant.streaming > :last-child::after,
+  .chip .chip-pending,
+  .work-block.live .work-label,
+  .lane-block.live .lane-status,
+  #mic.listening {
+    animation: none;
+  }
+}

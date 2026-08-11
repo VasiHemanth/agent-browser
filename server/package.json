@@ -1,0 +1,28 @@
+{
+  "name": "agentbrowser-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local hub for the AgentBrowser Chrome extension: WebSocket relay plus pluggable harness adapters.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VasiHemanth/agentbrowser.git",
+    "directory": "server"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "start": "node hub.mjs",
+    "test": "node --test pricing.test.mjs api-adapters.test.mjs protocol-v13.test.mjs",
+    "test:e2e": "node --test hub-e2e.test.mjs",
+    "smoke": "node smoke.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "ws": "^8.18.0",
+    "zod": "^3.24.0"
+  }
+}

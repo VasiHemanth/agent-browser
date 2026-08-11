@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentBrowser — chat with a coding agent that drives your real browser</title>
+<meta name="description" content="A Chrome side panel that chats with a coding harness while the harness drives your real browser through trusted CDP input.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+<style>
+  :root {
+    --bg: #fbfbfa;
+    --panel: #ffffff;
+    --ink: #1a1a18;
+    --muted: #63635e;
+    --line: #e4e4df;
+    --accent: #b8552b;
+    --accent-soft: #fdf1ea;
+    --code-bg: #f4f4f1;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #171614;
+      --panel: #1f1e1b;
+      --ink: #ecebe6;
+      --muted: #a3a099;
+      --line: #33312d;
+      --accent: #e08d5f;
+      --accent-soft: #2a2118;
+      --code-bg: #262420;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171614;
+    --panel: #1f1e1b;
+    --ink: #ecebe6;
+    --muted: #a3a099;
+    --line: #33312d;
+    --accent: #e08d5f;
+    --accent-soft: #2a2118;
+    --code-bg: #262420;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, pre { font-family: var(--mono); }
+
+  /* hero */
+  header { padding: 88px 0 56px; border-bottom: 1px solid var(--line); }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 18px;
+  }
+  h1 { font-size: clamp(38px, 7vw, 60px); line-height: 1.04; margin: 0 0 20px; letter-spacing: -.03em; }
+  .lede { font-size: clamp(17px, 2.4vw, 20px); color: var(--muted); margin: 0 0 34px; max-width: 62ch; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    display: inline-block; padding: 11px 20px; border-radius: 7px;
+    background: var(--accent); color: #fff; font-weight: 550; font-size: 15px;
+    border: 1px solid transparent;
+  }
+  .btn:hover { text-decoration: none; opacity: .9; }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+
+  /* sections */
+  section { padding: 56px 0; border-bottom: 1px solid var(--line); }
+  h2 { font-size: 13px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .14em;
+       color: var(--muted); margin: 0 0 22px; font-weight: 600; }
+  h3 { font-size: 18px; margin: 0 0 8px; letter-spacing: -.01em; }
+  p { margin: 0 0 16px; }
+  .muted { color: var(--muted); }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 9px;
+    padding: 16px 18px; overflow-x: auto; font-size: 13.5px; line-height: 1.7; margin: 0 0 16px;
+  }
+  pre .c { color: var(--muted); }
+  :not(pre) > code {
+    background: var(--code-bg); border: 1px solid var(--line);
+    padding: 1px 5px; border-radius: 4px; font-size: .89em;
+  }
+
+  .callout {
+    background: var(--accent-soft); border: 1px solid var(--line);
+    border-left: 3px solid var(--accent); border-radius: 0 9px 9px 0;
+    padding: 18px 20px; margin: 0 0 8px;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 18px 20px; }
+  .card h3 { font-family: var(--mono); font-size: 14px; color: var(--accent); }
+  .card p { font-size: 14.5px; color: var(--muted); margin: 0; }
+
+  .tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .tbl th, .tbl td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .tbl th { font-family: var(--mono); font-size: 11.5px; text-transform: uppercase;
+            letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+  .tbl td:first-child { font-family: var(--mono); color: var(--accent); white-space: nowrap; }
+  .scroll { overflow-x: auto; }
+
+  figure { margin: 0; }
+  svg { display: block; width: 100%; height: auto; }
+  figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; }
+
+  ul.plain { margin: 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
+  ul.plain li { margin-bottom: 7px; }
+
+  footer { padding: 40px 0 64px; font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="eyebrow">Chrome extension + local hub</p>
+    <h1>Chat with a coding agent that drives your&nbsp;real browser.</h1>
+    <p class="lede">
+      AgentBrowser is a Chrome side panel wired to a local hub. You talk to a coding
+      harness; it clicks, types, reads and navigates in the browser you are already
+      logged into. No automation profile, no re-login, no content scripts.
+    </p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/VasiHemanth/agentbrowser">View on GitHub</a>
+      <a class="btn ghost" href="https://github.com/VasiHemanth/agentbrowser#install">Install</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>The problem it solves</h2>
+    <div class="callout">
+      <p>
+        Synthetic events from content scripts carry <code>isTrusted: false</code>, and
+        modern editors built on Lexical or React composers ignore them outright. That is
+        why so much browser automation silently fails to type into a real text box.
+      </p>
+      <p>
+        AgentBrowser dispatches input through <code>chrome.debugger</code> instead. CDP
+        clicks and <code>Input.insertText</code> arrive exactly as a human's do. Because it
+        attaches to your existing profile, the manifest asks for
+        <code>debugger, tabs, storage, offscreen, sidePanel</code> and nothing else. No
+        host permissions at all.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Architecture</h2>
+    <figure>
+      <svg viewBox="0 0 860 250" role="img" aria-label="Side panel talks to the service worker, which talks to the hub. The service worker drives Chrome tabs over CDP. The hub runs adapters and an MCP proxy.">
+        <defs>
+          <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <g style="color: var(--muted)" fill="none" stroke="currentColor" stroke-width="1.5">
+          <line x1="176" y1="52" x2="288" y2="52" marker-end="url(#ar)"/>
+          <line x1="448" y1="52" x2="560" y2="52" marker-end="url(#ar)"/>
+          <line x1="368" y1="86" x2="368" y2="152" marker-end="url(#ar)"/>
+          <line x1="672" y1="86" x2="672" y2="152" marker-end="url(#ar)"/>
+        </g>
+        <g font-family="ui-monospace, monospace" font-size="13">
+          <g style="color: var(--ink)" fill="currentColor">
+            <rect x="16" y="28" width="160" height="48" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+            <text x="96" y="50" text-anchor="middle">side panel</text>
+            <text x="96" y="66" text-anchor="middle" font-size="11" fill="var(--muted)">chat UI</text>
+
+            <rect x="288" y="28" width="160" height="48" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+            <text x="368" y="50" text-anchor="middle">service worker</text>
+            <text x="368" y="66" text-anchor="middle" font-size="11" fill="var(--muted)">sw.js</text>
+
+            <rect x="560" y="28" width="284" height="48" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+            <text x="702" y="50" text-anchor="middle">hub</text>
+            <text x="702" y="66" text-anchor="middle" font-size="11" fill="var(--muted)">127.0.0.1:9010</text>
+
+            <rect x="256" y="152" width="224" height="62" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
+            <text x="368" y="176" text-anchor="middle" fill="var(--accent)">chrome.debugger</text>
+            <text x="368" y="194" text-anchor="middle" font-size="11" fill="var(--muted)">trusted CDP input</text>
+
+            <rect x="560" y="152" width="284" height="62" rx="8" fill="var(--panel)" stroke="var(--line)"/>
+            <text x="702" y="176" text-anchor="middle">adapters</text>
+            <text x="702" y="194" text-anchor="middle" font-size="11" fill="var(--muted)">SDK · CLI · API · mcp-proxy</text>
+          </g>
+          <g fill="var(--muted)" font-size="10.5">
+            <text x="232" y="44" text-anchor="middle">Port</text>
+            <text x="504" y="44" text-anchor="middle">WebSocket</text>
+          </g>
+        </g>
+      </svg>
+      <figcaption>
+        The hub relays chat between the panel and the active adapter, and relays tool
+        calls from any harness to the extension, which executes them via CDP.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Install</h2>
+<pre><span class="c">git</span> clone https://github.com/VasiHemanth/agentbrowser.git
+<span class="c">cd</span> agentbrowser/server
+npm install
+npm start          <span class="c"># listens on ws://127.0.0.1:9010</span></pre>
+    <p class="muted">
+      Then open <code>chrome://extensions</code>, enable Developer mode, choose
+      Load unpacked, and select the repo's <code>extension/</code> directory. Click the
+      toolbar icon; the status dot turns green when the hub is reachable.
+    </p>
+    <p class="muted">Needs Chrome and Node.js 20.11 or newer.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Ten browser tools</h2>
+    <div class="scroll">
+      <table class="tbl">
+        <thead><tr><th>tool</th><th>args</th><th>result</th></tr></thead>
+        <tbody>
+          <tr><td>tabs_list</td><td><code>{}</code></td><td>every open tab with id, url, title, active</td></tr>
+          <tr><td>tab_new</td><td><code>{url?}</code></td><td>the new tabId</td></tr>
+          <tr><td>tab_close</td><td><code>{tabId}</code></td><td>confirmation</td></tr>
+          <tr><td>navigate</td><td><code>{url, tabId?}</code></td><td>url and title after load, 20s cap</td></tr>
+          <tr><td>read_page</td><td><code>{tabId?, maxChars?}</code></td><td>innerText, 60k char default cap</td></tr>
+          <tr><td>screenshot</td><td><code>{tabId?}</code></td><td>base64 PNG</td></tr>
+          <tr><td>click</td><td><code>{x, y, tabId?}</code></td><td>trusted CDP click</td></tr>
+          <tr><td>type_text</td><td><code>{text, tabId?}</code></td><td>inserts into the focused element</td></tr>
+          <tr><td>press_key</td><td><code>{key, tabId?}</code></td><td>e.g. Enter, Escape, Meta+A</td></tr>
+          <tr><td>eval_js</td><td><code>{expression, tabId?}</code></td><td>the evaluated value</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="margin-top:16px">
+      Omit <code>tabId</code> to act on the active tab. The service worker attaches the
+      debugger on demand, serializes commands per tab, and re-attaches if Chrome detaches it.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Bring your own backend</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>claude-agent-sdk</h3>
+        <p>Runs in the hub process. Tools exposed as an in-process MCP server; screenshots come back as images the model can see.</p>
+      </div>
+      <div class="card">
+        <h3>claude-cli</h3>
+        <p>Spawns <code>claude -p</code> in stream-json mode, kept alive for the session. Full Claude Code toolset alongside the browser tools.</p>
+      </div>
+      <div class="card">
+        <h3>codex · opencode · copilot</h3>
+        <p>One process per turn, resumed through each CLI's own session mechanism. Browser tools attach over the stdio MCP proxy.</p>
+      </div>
+      <div class="card">
+        <h3>grok · agy · gemini</h3>
+        <p>Same generic CLI wrapper, each with its own resume flag and MCP config shape.</p>
+      </div>
+      <div class="card">
+        <h3>anthropic-api · openai-api</h3>
+        <p>Talk to the provider directly, no CLI needed. Keys live in <code>~/.agentchat/keys.json</code> at mode 0600 and never reach the panel.</p>
+      </div>
+      <div class="card">
+        <h3>Anything that speaks MCP</h3>
+        <p><code>mcp-proxy.mjs</code> is a stdio MCP server forwarding to the hub. Point Cursor, Gemini CLI or another Claude Code at it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Worth knowing before you install</h2>
+    <ul class="plain">
+      <li>Chrome allows one debugger client per tab. With DevTools open on a tab, tool calls on that tab fail until it detaches.</li>
+      <li>Chrome shows an "is being debugged" infobar while attached. Dismissing it detaches; the next tool call re-attaches.</li>
+      <li>The hub accepts one extension connection. A second profile displaces the first.</li>
+      <li>Filling a form is not permission to submit it. The harness will not click submit, send, post or buy unless you asked.</li>
+      <li>API keys are stored in plain text, protected by file permissions, not encrypted.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    MIT licensed ·
+    <a href="https://github.com/VasiHemanth/agentbrowser">github.com/VasiHemanth/agentbrowser</a> ·
+    <a href="https://github.com/VasiHemanth/agentbrowser/blob/main/PROTOCOL.md">PROTOCOL.md</a> is the source of truth
+  </div>
+</footer>
+
+</body>
+</html>
