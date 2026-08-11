@@ -2207,7 +2207,7 @@ function init() {
 
   function autoGrow() {
     inputEl.style.height = "auto";
-    inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + "px";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 112) + "px";
   }
 
   // "tab: … · tagged: … · files: …" under the user bubble.

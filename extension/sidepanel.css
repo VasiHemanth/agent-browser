@@ -846,6 +846,10 @@ button:disabled {
   position: relative;
   flex: none;
   min-width: 0;
+  /* A blank conversation must reserve space for messages, not a tall empty
+     editor. Context rows can scroll inside this bounded footer. */
+  max-height: min(196px, 32dvh);
+  overflow-y: auto;
   margin: 0 var(--ac-space-12) var(--ac-space-12);
   padding: var(--ac-space-14);
   background: var(--ac-bg-2);
@@ -972,8 +976,8 @@ button:disabled {
   border: 0;
   padding: 0;
   font: var(--ac-type-body);
-  min-height: 24px;
-  max-height: 180px;
+  min-height: 48px;
+  max-height: 112px;
   overflow-y: auto;
   overflow-wrap: anywhere;
 }
