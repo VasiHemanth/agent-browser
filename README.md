@@ -197,6 +197,20 @@ Qwen CLI, Codex, Gemini CLI and Claude Code all take a config in this shape;
 only the file name differs (`config.toml` for Codex, `settings.json` for
 Gemini, `.mcp.json` for Claude Code).
 
+### Codex setup
+
+With the hub running and the unpacked `extension/` loaded in Chrome, register
+the stdio proxy once:
+
+```bash
+codex mcp add agentbrowser -- node /absolute/path/to/agentbrowser/server/mcp-proxy.mjs
+```
+
+Restart Codex or open a new task so it loads the new MCP server. A safe first
+check is: “Use AgentBrowser to list my open tabs.” The ten browser tools are
+available to Codex only while the hub is reachable and the extension status
+dot is green.
+
 Three more take the same server definition under a different key:
 
 | client | where the server goes |
