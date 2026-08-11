@@ -192,9 +192,27 @@ adding it to its MCP config:
 ```
 
 Start the hub, keep the extension loaded, and the harness gets the same ten
-tools the built-in adapters use. Codex, Gemini CLI, Cursor, and Claude Code
-all take a config in this shape (file names differ: `config.toml` for Codex,
-`settings.json` for Gemini, `.mcp.json` for Claude Code).
+tools the built-in adapters use, with no adapter of its own. Cursor, Cline,
+Qwen CLI, Codex, Gemini CLI and Claude Code all take a config in this shape;
+only the file name differs (`config.toml` for Codex, `settings.json` for
+Gemini, `.mcp.json` for Claude Code).
+
+Python agent frameworks reach it the same way. LangGraph and DeepAgents both
+load stdio MCP servers through
+[`langchain-mcp-adapters`](https://github.com/langchain-ai/langchain-mcp-adapters):
+
+```python
+from langchain_mcp_adapters.client import MultiServerMCPClient
+
+client = MultiServerMCPClient({
+    "agentbrowser": {
+        "command": "node",
+        "args": ["/absolute/path/to/agentbrowser/server/mcp-proxy.mjs"],
+        "transport": "stdio",
+    }
+})
+tools = await client.get_tools()
+```
 
 ## Browser tools
 
