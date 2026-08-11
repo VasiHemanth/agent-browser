@@ -3,156 +3,205 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AgentBrowser — chat with a coding agent that drives your real browser</title>
-<meta name="description" content="A Chrome side panel that chats with a coding harness while the harness drives your real browser through trusted CDP input.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+
+<title>AgentBrowser — chat with a coding agent that drives your real Chrome</title>
+<meta name="description" content="Open-source Chrome side panel that chats with a coding agent while the agent drives your real browser. Trusted CDP input via chrome.debugger. Works with Claude, Codex, Copilot, Gemini, Grok, OpenCode and any MCP harness.">
+<link rel="canonical" href="https://vasihemanth.github.io/agentbrowser/">
+<meta name="theme-color" content="#0b0f0d">
+<meta name="color-scheme" content="dark">
+<meta name="author" content="Hemanth Vasi">
+<meta name="keywords" content="browser automation, Chrome extension, coding agent, MCP, Model Context Protocol, chrome.debugger, CDP, Claude, Codex, Copilot, Gemini, Grok, AI browser agent">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AgentBrowser">
+<meta property="og:title" content="AgentBrowser — chat with a coding agent that drives your real Chrome">
+<meta property="og:description" content="A Chrome side panel wired to a local hub. Your coding agent clicks, types and reads in the browser you are already logged into. Trusted CDP input, no content scripts, no host permissions.">
+<meta property="og:url" content="https://vasihemanth.github.io/agentbrowser/">
+<meta property="og:image" content="https://opengraph.githubassets.com/1/VasiHemanth/agentbrowser">
+<meta property="og:image:alt" content="AgentBrowser on GitHub">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AgentBrowser — chat with a coding agent that drives your real Chrome">
+<meta name="twitter:description" content="Trusted CDP input via chrome.debugger, in your normal logged-in profile. Works with Claude, Codex, Copilot, Gemini, Grok and any MCP harness.">
+<meta name="twitter:image" content="https://opengraph.githubassets.com/1/VasiHemanth/agentbrowser">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%230b0f0d'/><circle cx='12' cy='12' r='5' fill='none' stroke='%2322c55e' stroke-width='2'/><circle cx='12' cy='12' r='1.6' fill='%2322c55e'/></svg>">
+
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AgentBrowser","applicationCategory":"DeveloperApplication","applicationSubCategory":"Browser Extension","operatingSystem":"Chrome, Chromium","description":"A Chrome side panel that chats with a coding agent while the agent drives your real browser through trusted CDP input. Works with Claude, Codex, Copilot, Gemini, Grok, OpenCode and any MCP harness.","url":"https://vasihemanth.github.io/agentbrowser/","downloadUrl":"https://github.com/VasiHemanth/agentbrowser","codeRepository":"https://github.com/VasiHemanth/agentbrowser","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Hemanth Vasi"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"softwareRequirements":"Chrome; Node.js 20.11+","featureList":["Trusted CDP input via chrome.debugger","Ten browser tools: tabs, navigate, read_page, screenshot, click, type_text, press_key, eval_js","Pluggable coding-agent backends","stdio MCP proxy for any MCP-capable harness"]}</script>
+
 <style>
   :root {
-    --bg: #fbfbfa;
-    --panel: #ffffff;
-    --ink: #1a1a18;
-    --muted: #63635e;
-    --line: #e4e4df;
-    --accent: #b8552b;
-    --accent-soft: #fdf1ea;
-    --code-bg: #f4f4f1;
-    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    /* Lifted from the extension's own tokens (extension/sidepanel.css) */
+    --bg-0:#0b0f0d; --bg-1:#0f1512; --bg-2:#141c18;
+    --border:#1f2b25; --border-soft:#17211c;
+    --text:#dbe5df; --text-2:#9aa8a0; --text-3:#6f7d75;
+    --accent:#22c55e; --accent-hover:#2ee06d; --accent-pressed:#16a34a;
+    --tint:rgba(34,197,94,.13); --tint-strong:rgba(34,197,94,.22);
+    --on-accent:#06210f;
+    --sans:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --radius:10px;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #171614;
-      --panel: #1f1e1b;
-      --ink: #ecebe6;
-      --muted: #a3a099;
-      --line: #33312d;
-      --accent: #e08d5f;
-      --accent-soft: #2a2118;
-      --code-bg: #262420;
-    }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg-0); color:var(--text);
+    font-family:var(--sans); line-height:1.65; font-size:16px;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(760px 380px at 15% -8%, rgba(34,197,94,.10), transparent 70%),
+      radial-gradient(600px 300px at 92% 4%, rgba(34,197,94,.055), transparent 72%);
+    background-repeat:no-repeat;
   }
-  :root[data-theme="dark"] {
-    --bg: #171614;
-    --panel: #1f1e1b;
-    --ink: #ecebe6;
-    --muted: #a3a099;
-    --line: #33312d;
-    --accent: #e08d5f;
-    --accent-soft: #2a2118;
-    --code-bg: #262420;
-  }
+  .wrap{max-width:940px;margin:0 auto;padding:0 24px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{color:var(--accent-hover);text-decoration:underline}
+  code{font-family:var(--mono)}
+  :not(pre)>code{background:var(--bg-2);border:1px solid var(--border-soft);padding:0 4px;border-radius:4px;font-size:.88em;color:var(--text)}
+  .card code,td code,li code{padding:0 3px}
+  svg.ico{width:100%;height:100%;display:block}
 
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--sans);
-    line-height: 1.65;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  code, pre { font-family: var(--mono); }
+  /* nav */
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0;border-bottom:1px solid var(--border-soft)}
+  .brand{display:flex;align-items:center;gap:10px;color:var(--text);font-weight:600;letter-spacing:-.01em}
+  .brand:hover{text-decoration:none;color:var(--text)}
+  .dot{width:9px;height:9px;border-radius:999px;background:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+  .nav-links{display:flex;gap:20px;font-size:14.5px}
+  .nav-links a{color:var(--text-2)}
+  .nav-links a:hover{color:var(--accent)}
 
   /* hero */
-  header { padding: 88px 0 56px; border-bottom: 1px solid var(--line); }
-  .eyebrow {
-    font-family: var(--mono); font-size: 12px; letter-spacing: .14em;
-    text-transform: uppercase; color: var(--accent); margin: 0 0 18px;
-  }
-  h1 { font-size: clamp(38px, 7vw, 60px); line-height: 1.04; margin: 0 0 20px; letter-spacing: -.03em; }
-  .lede { font-size: clamp(17px, 2.4vw, 20px); color: var(--muted); margin: 0 0 34px; max-width: 62ch; }
-  .cta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-  .btn {
-    display: inline-block; padding: 11px 20px; border-radius: 7px;
-    background: var(--accent); color: #fff; font-weight: 550; font-size: 15px;
-    border: 1px solid transparent;
-  }
-  .btn:hover { text-decoration: none; opacity: .9; }
-  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .hero{padding:76px 0 40px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);background:var(--tint);border:1px solid var(--tint-strong);padding:5px 11px;border-radius:999px;margin:0 0 22px}
+  h1{font-size:clamp(36px,6.4vw,58px);line-height:1.05;letter-spacing:-.032em;margin:0 0 20px;font-weight:640}
+  h1 .g{color:var(--accent)}
+  .lede{font-size:clamp(16.5px,2.2vw,19.5px);color:var(--text-2);margin:0 0 30px;max-width:60ch}
+  .cta{display:flex;gap:11px;flex-wrap:wrap;align-items:center;margin-bottom:34px}
+  .btn{display:inline-block;padding:11px 20px;border-radius:8px;font-weight:560;font-size:15px;border:1px solid transparent;background:var(--accent);color:var(--on-accent)}
+  .btn:hover{background:var(--accent-hover);color:var(--on-accent);text-decoration:none}
+  .btn.ghost{background:transparent;color:var(--text);border-color:var(--border)}
+  .btn.ghost:hover{border-color:var(--accent);color:var(--accent);background:var(--tint)}
+
+  /* code */
+  pre{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;overflow-x:auto;font-size:13.5px;line-height:1.75;margin:0 0 18px;font-family:var(--mono)}
+  pre .c{color:var(--text-3)}
+  pre .k{color:var(--accent)}
+
+  /* strip */
+  .strip{list-style:none;display:flex;flex-wrap:wrap;gap:9px;padding:0;margin:0}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:var(--bg-1);border:1px solid var(--border);border-radius:999px;padding:7px 14px 7px 10px;font-size:13.5px;color:var(--text-2)}
+  .chip-ico{width:17px;height:17px;flex:none;color:var(--text)}
+  .chip:hover{border-color:var(--accent);color:var(--text)}
 
   /* sections */
-  section { padding: 56px 0; border-bottom: 1px solid var(--line); }
-  h2 { font-size: 13px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .14em;
-       color: var(--muted); margin: 0 0 22px; font-weight: 600; }
-  h3 { font-size: 18px; margin: 0 0 8px; letter-spacing: -.01em; }
-  p { margin: 0 0 16px; }
-  .muted { color: var(--muted); }
+  section{padding:52px 0;border-top:1px solid var(--border-soft)}
+  .kicker{font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3);margin:0 0 10px;font-weight:600}
+  h2{font-size:clamp(23px,3.2vw,30px);letter-spacing:-.022em;margin:0 0 18px;font-weight:620}
+  h3{font-size:15.5px;margin:0;letter-spacing:-.008em;font-weight:600}
+  p{margin:0 0 16px}
+  .muted{color:var(--text-2)}
+  .lead-p{font-size:17px;color:var(--text-2);max-width:66ch}
 
-  pre {
-    background: var(--code-bg); border: 1px solid var(--line); border-radius: 9px;
-    padding: 16px 18px; overflow-x: auto; font-size: 13.5px; line-height: 1.7; margin: 0 0 16px;
-  }
-  pre .c { color: var(--muted); }
-  :not(pre) > code {
-    background: var(--code-bg); border: 1px solid var(--line);
-    padding: 1px 5px; border-radius: 4px; font-size: .89em;
-  }
+  .callout{background:var(--bg-1);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0;padding:20px 22px}
+  .callout p:last-child{margin-bottom:0}
 
-  .callout {
-    background: var(--accent-soft); border: 1px solid var(--line);
-    border-left: 3px solid var(--accent); border-radius: 0 9px 9px 0;
-    padding: 18px 20px; margin: 0 0 8px;
-  }
-  .callout p:last-child { margin-bottom: 0; }
+  /* cards */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:13px}
+  .card{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;transition:border-color .2s}
+  .card:hover{border-color:var(--accent)}
+  .card-hd{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .card-ico{width:22px;height:22px;flex:none;color:var(--text)}
+  .card h3{font-family:var(--mono);font-size:14px;color:var(--text)}
+  .card p{font-size:14px;color:var(--text-2);margin:0}
+  .card code{font-size:12.5px}
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 18px 20px; }
-  .card h3 { font-family: var(--mono); font-size: 14px; color: var(--accent); }
-  .card p { font-size: 14.5px; color: var(--muted); margin: 0; }
+  /* table */
+  .scroll{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
+  caption{text-align:left;color:var(--text-3);font-size:13.5px;padding:11px 14px;background:var(--bg-1);border-bottom:1px solid var(--border-soft)}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+  thead th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);font-weight:600;background:var(--bg-1)}
+  tbody th{font-weight:400}
+  tbody th code{color:var(--accent);background:transparent;border:0;padding:0;white-space:nowrap}
+  tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+  td{color:var(--text-2)}
 
-  .tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
-  .tbl th, .tbl td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  .tbl th { font-family: var(--mono); font-size: 11.5px; text-transform: uppercase;
-            letter-spacing: .1em; color: var(--muted); font-weight: 600; }
-  .tbl td:first-child { font-family: var(--mono); color: var(--accent); white-space: nowrap; }
-  .scroll { overflow-x: auto; }
+  /* diagram */
+  figure{margin:0}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{font-size:13.5px;color:var(--text-3);margin-top:14px}
 
-  figure { margin: 0; }
-  svg { display: block; width: 100%; height: auto; }
-  figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; }
+  ol.steps{margin:0;padding-left:20px;color:var(--text-2)}
+  ol.steps li{margin-bottom:9px}
+  ul.plain{margin:0;padding-left:20px;color:var(--text-2)}
+  ul.plain li{margin-bottom:9px}
 
-  ul.plain { margin: 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
-  ul.plain li { margin-bottom: 7px; }
-
-  footer { padding: 40px 0 64px; font-size: 14px; color: var(--muted); }
+  footer{padding:40px 0 60px;border-top:1px solid var(--border-soft);font-size:13.5px;color:var(--text-3)}
+  footer p{margin:0 0 8px}
+  @media (max-width:560px){ .hero{padding:52px 0 32px} section{padding:42px 0} }
 </style>
 </head>
 <body>
 
-<header>
+<div class="wrap">
+  <nav class="nav" aria-label="Primary">
+    <a class="brand" href="https://vasihemanth.github.io/agentbrowser/"><span class="dot"></span> AgentBrowser</a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#agents">Agents</a>
+      <a href="#tools">Tools</a>
+      <a href="https://github.com/VasiHemanth/agentbrowser">GitHub</a>
+    </div>
+  </nav>
+</div>
+
+<header class="hero">
   <div class="wrap">
-    <p class="eyebrow">Chrome extension + local hub</p>
-    <h1>Chat with a coding agent that drives your&nbsp;real browser.</h1>
+    <p class="eyebrow"><span class="dot" style="width:6px;height:6px;box-shadow:none"></span> Chrome extension + local hub</p>
+    <h1>Chat with a coding agent that drives your <span class="g">real browser</span>.</h1>
     <p class="lede">
       AgentBrowser is a Chrome side panel wired to a local hub. You talk to a coding
-      harness; it clicks, types, reads and navigates in the browser you are already
+      agent; it clicks, types, reads and navigates in the browser you are already
       logged into. No automation profile, no re-login, no content scripts.
     </p>
     <div class="cta">
       <a class="btn" href="https://github.com/VasiHemanth/agentbrowser">View on GitHub</a>
-      <a class="btn ghost" href="https://github.com/VasiHemanth/agentbrowser#install">Install</a>
+      <a class="btn ghost" href="#install">Install in 4 steps</a>
     </div>
+    <ul class="strip" aria-label="Supported coding agents">
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Claude</title><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="#D97757" fill-rule="nonzero"></path></svg></span><span>Claude</span></li>
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Claude Code</title><path clip-rule="evenodd" d="M20.998 10.949H24v3.102h-3v3.028h-1.487V20H18v-2.921h-1.487V20H15v-2.921H9V20H7.488v-2.921H6V20H4.487v-2.921H3V14.05H0V10.95h3V5h17.998v5.949zM6 10.949h1.488V8.102H6v2.847zm10.51 0H18V8.102h-1.49v2.847z" fill="#D97757" fill-rule="evenodd"></path></svg></span><span>Claude Code</span></li>
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Codex</title><path clip-rule="evenodd" d="M8.086.457a6.105 6.105 0 013.046-.415c1.333.153 2.521.72 3.564 1.7a.117.117 0 00.107.029c1.408-.346 2.762-.224 4.061.366l.063.03.154.076c1.357.703 2.33 1.77 2.918 3.198.278.679.418 1.388.421 2.126a5.655 5.655 0 01-.18 1.631.167.167 0 00.04.155 5.982 5.982 0 011.578 2.891c.385 1.901-.01 3.615-1.183 5.14l-.182.22a6.063 6.063 0 01-2.934 1.851.162.162 0 00-.108.102c-.255.736-.511 1.364-.987 1.992-1.199 1.582-2.962 2.462-4.948 2.451-1.583-.008-2.986-.587-4.21-1.736a.145.145 0 00-.14-.032c-.518.167-1.04.191-1.604.185a5.924 5.924 0 01-2.595-.622 6.058 6.058 0 01-2.146-1.781c-.203-.269-.404-.522-.551-.821a7.74 7.74 0 01-.495-1.283 6.11 6.11 0 01-.017-3.064.166.166 0 00.008-.074.115.115 0 00-.037-.064 5.958 5.958 0 01-1.38-2.202 5.196 5.196 0 01-.333-1.589 6.915 6.915 0 01.188-2.132c.45-1.484 1.309-2.648 2.577-3.493.282-.188.55-.334.802-.438.286-.12.573-.22.861-.304a.129.129 0 00.087-.087A6.016 6.016 0 015.635 2.31C6.315 1.464 7.132.846 8.086.457zm-.804 7.85a.848.848 0 00-1.473.842l1.694 2.965-1.688 2.848a.849.849 0 001.46.864l1.94-3.272a.849.849 0 00.007-.854l-1.94-3.393zm5.446 6.24a.849.849 0 000 1.695h4.848a.849.849 0 000-1.696h-4.848z"></path></svg></span><span>OpenAI Codex</span></li>
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>opencode</title><path d="M16 6H8v12h8V6zm4 16H4V2h16v20z"></path></svg></span><span>OpenCode</span></li>
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Copilot</title><path d="M17.533 1.829A2.528 2.528 0 0015.11 0h-.737a2.531 2.531 0 00-2.484 2.087l-1.263 6.937.314-1.08a2.528 2.528 0 012.424-1.833h4.284l1.797.706 1.731-.706h-.505a2.528 2.528 0 01-2.423-1.829l-.715-2.453z" fill="url(#lobe-icons-copilot-0-_R_0_)" transform="translate(0 1)"></path><path d="M6.726 20.16A2.528 2.528 0 009.152 22h1.566c1.37 0 2.49-1.1 2.525-2.48l.17-6.69-.357 1.228a2.528 2.528 0 01-2.423 1.83h-4.32l-1.54-.842-1.667.843h.497c1.124 0 2.113.75 2.426 1.84l.697 2.432z" fill="url(#lobe-icons-copilot-1-_R_0_)" transform="translate(0 1)"></path><path d="M15 0H6.252c-2.5 0-4 3.331-5 6.662-1.184 3.947-2.734 9.225 1.75 9.225H6.78c1.13 0 2.12-.753 2.43-1.847.657-2.317 1.809-6.359 2.713-9.436.46-1.563.842-2.906 1.43-3.742A1.97 1.97 0 0115 0" fill="url(#lobe-icons-copilot-2-_R_0_)" transform="translate(0 1)"></path><path d="M15 0H6.252c-2.5 0-4 3.331-5 6.662-1.184 3.947-2.734 9.225 1.75 9.225H6.78c1.13 0 2.12-.753 2.43-1.847.657-2.317 1.809-6.359 2.713-9.436.46-1.563.842-2.906 1.43-3.742A1.97 1.97 0 0115 0" fill="url(#lobe-icons-copilot-3-_R_0_)" transform="translate(0 1)"></path><path d="M9 22h8.749c2.5 0 4-3.332 5-6.663 1.184-3.948 2.734-9.227-1.75-9.227H17.22c-1.129 0-2.12.754-2.43 1.848a1149.2 1149.2 0 01-2.713 9.437c-.46 1.564-.842 2.907-1.43 3.743A1.97 1.97 0 019 22" fill="url(#lobe-icons-copilot-4-_R_0_)" transform="translate(0 1)"></path><path d="M9 22h8.749c2.5 0 4-3.332 5-6.663 1.184-3.948 2.734-9.227-1.75-9.227H17.22c-1.129 0-2.12.754-2.43 1.848a1149.2 1149.2 0 01-2.713 9.437c-.46 1.564-.842 2.907-1.43 3.743A1.97 1.97 0 019 22" fill="url(#lobe-icons-copilot-5-_R_0_)" transform="translate(0 1)"></path><defs><radialGradient cx="85.44%" cy="100.653%" fx="85.44%" fy="100.653%" gradientTransform="scale(-.8553 -1) rotate(50.927 2.041 -1.946)" id="lobe-icons-copilot-0-_R_0_" r="105.116%"><stop offset="9.6%" stop-color="#00AEFF"></stop><stop offset="77.3%" stop-color="#2253CE"></stop><stop offset="100%" stop-color="#0736C4"></stop></radialGradient><radialGradient cx="18.143%" cy="32.928%" fx="18.143%" fy="32.928%" gradientTransform="scale(.8897 1) rotate(52.069 .193 .352)" id="lobe-icons-copilot-1-_R_0_" r="95.612%"><stop offset="0%" stop-color="#FFB657"></stop><stop offset="63.4%" stop-color="#FF5F3D"></stop><stop offset="92.3%" stop-color="#C02B3C"></stop></radialGradient><radialGradient cx="82.987%" cy="-9.792%" fx="82.987%" fy="-9.792%" gradientTransform="scale(-1 -.9441) rotate(-70.872 .142 1.17)" id="lobe-icons-copilot-4-_R_0_" r="140.622%"><stop offset="6.6%" stop-color="#8C48FF"></stop><stop offset="50%" stop-color="#F2598A"></stop><stop offset="89.6%" stop-color="#FFB152"></stop></radialGradient><linearGradient id="lobe-icons-copilot-2-_R_0_" x1="39.465%" x2="46.884%" y1="12.117%" y2="103.774%"><stop offset="15.6%" stop-color="#0D91E1"></stop><stop offset="48.7%" stop-color="#52B471"></stop><stop offset="65.2%" stop-color="#98BD42"></stop><stop offset="93.7%" stop-color="#FFC800"></stop></linearGradient><linearGradient id="lobe-icons-copilot-3-_R_0_" x1="45.949%" x2="50%" y1="0%" y2="100%"><stop offset="0%" stop-color="#3DCBFF"></stop><stop offset="24.7%" stop-color="#0588F7" stop-opacity="0"></stop></linearGradient><linearGradient id="lobe-icons-copilot-5-_R_0_" x1="83.507%" x2="83.453%" y1="-6.106%" y2="21.131%"><stop offset="5.8%" stop-color="#F8ADFA"></stop><stop offset="70.8%" stop-color="#A86EDD" stop-opacity="0"></stop></linearGradient></defs></svg></span><span>GitHub Copilot</span></li>
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Grok</title><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"></path></svg></span><span>Grok</span></li>
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Antigravity</title><mask height="23" id="lobe-icons-antigravity-0-_R_0_" maskUnits="userSpaceOnUse" width="24" x="0" y="1"><path d="M21.751 22.607c1.34 1.005 3.35.335 1.508-1.508C17.73 15.74 18.904 1 12.037 1 5.17 1 6.342 15.74.815 21.1c-2.01 2.009.167 2.511 1.507 1.506 5.192-3.517 4.857-9.714 9.715-9.714 4.857 0 4.522 6.197 9.714 9.715z" fill="#fff"></path></mask><g mask="url(#lobe-icons-antigravity-0-_R_0_)"><g filter="url(#lobe-icons-antigravity-1-_R_0_)"><path d="M-1.018-3.992c-.408 3.591 2.686 6.89 6.91 7.37 4.225.48 7.98-2.043 8.387-5.633.408-3.59-2.686-6.89-6.91-7.37-4.225-.479-7.98 2.043-8.387 5.633z" fill="#FFE432"></path></g><g filter="url(#lobe-icons-antigravity-2-_R_0_)"><path d="M15.269 7.747c1.058 4.557 5.691 7.374 10.348 6.293 4.657-1.082 7.575-5.653 6.516-10.21-1.058-4.556-5.691-7.374-10.348-6.292-4.657 1.082-7.575 5.653-6.516 10.21z" fill="#FC413D"></path></g><g filter="url(#lobe-icons-antigravity-3-_R_0_)"><path d="M-12.443 10.804c1.338 4.703 7.36 7.11 13.453 5.378 6.092-1.733 9.947-6.95 8.61-11.652C8.282-.173 2.26-2.58-3.833-.848-9.925.884-13.78 6.1-12.443 10.804z" fill="#00B95C"></path></g><g filter="url(#lobe-icons-antigravity-4-_R_0_)"><path d="M-12.443 10.804c1.338 4.703 7.36 7.11 13.453 5.378 6.092-1.733 9.947-6.95 8.61-11.652C8.282-.173 2.26-2.58-3.833-.848-9.925.884-13.78 6.1-12.443 10.804z" fill="#00B95C"></path></g><g filter="url(#lobe-icons-antigravity-5-_R_0_)"><path d="M-7.608 14.703c3.352 3.424 9.126 3.208 12.896-.483 3.77-3.69 4.108-9.459.756-12.883C2.69-2.087-3.083-1.871-6.853 1.82c-3.77 3.69-4.108 9.458-.755 12.883z" fill="#00B95C"></path></g><g filter="url(#lobe-icons-antigravity-6-_R_0_)"><path d="M9.932 27.617c1.04 4.482 5.384 7.303 9.7 6.3 4.316-1.002 6.971-5.448 5.93-9.93-1.04-4.483-5.384-7.304-9.7-6.301-4.316 1.002-6.971 5.448-5.93 9.93z" fill="#3186FF"></path></g><g filter="url(#lobe-icons-antigravity-7-_R_0_)"><path d="M2.572-8.185C.392-3.329 2.778 2.472 7.9 4.771c5.122 2.3 11.042.227 13.222-4.63 2.18-4.855-.205-10.656-5.327-12.955-5.122-2.3-11.042-.227-13.222 4.63z" fill="#FBBC04"></path></g><g filter="url(#lobe-icons-antigravity-8-_R_0_)"><path d="M-3.267 38.686c-5.277-2.072 3.742-19.117 5.984-24.83 2.243-5.712 8.34-8.664 13.616-6.592 5.278 2.071 11.533 13.482 9.29 19.195-2.242 5.713-23.613 14.298-28.89 12.227z" fill="#3186FF"></path></g><g filter="url(#lobe-icons-antigravity-9-_R_0_)"><path d="M28.71 17.471c-1.413 1.649-5.1.808-8.236-1.878-3.135-2.687-4.531-6.201-3.118-7.85 1.412-1.649 5.1-.808 8.235 1.878s4.532 6.2 3.119 7.85z" fill="#749BFF"></path></g><g filter="url(#lobe-icons-antigravity-10-_R_0_)"><path d="M18.163 9.077c5.81 3.93 12.502 4.19 14.946.577 2.443-3.612-.287-9.727-6.098-13.658-5.81-3.931-12.502-4.19-14.946-.577-2.443 3.612.287 9.727 6.098 13.658z" fill="#FC413D"></path></g><g filter="url(#lobe-icons-antigravity-11-_R_0_)"><path d="M-.915 2.684c-1.44 3.473-.97 6.967 1.05 7.804 2.02.837 4.824-1.3 6.264-4.772 1.44-3.473.97-6.967-1.05-7.804-2.02-.837-4.824 1.3-6.264 4.772z" fill="#FFEE48"></path></g></g><defs><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="17.587" id="lobe-icons-antigravity-1-_R_0_" width="19.838" x="-3.288" y="-11.917"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="1.117"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="38.565" id="lobe-icons-antigravity-2-_R_0_" width="38.9" x="4.251" y="-13.493"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="5.4"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="36.517" id="lobe-icons-antigravity-3-_R_0_" width="40.955" x="-21.889" y="-10.592"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="4.591"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="36.517" id="lobe-icons-antigravity-4-_R_0_" width="40.955" x="-21.889" y="-10.592"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="4.591"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="36.595" id="lobe-icons-antigravity-5-_R_0_" width="36.632" x="-19.099" y="-10.278"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="4.591"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="34.087" id="lobe-icons-antigravity-6-_R_0_" width="33.533" x=".981" y="8.758"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="4.363"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="35.276" id="lobe-icons-antigravity-7-_R_0_" width="35.978" x="-6.143" y="-21.659"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="3.954"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="46.523" id="lobe-icons-antigravity-8-_R_0_" width="45.114" x="-11.96" y="-.46"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="3.531"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="24.054" id="lobe-icons-antigravity-9-_R_0_" width="25.094" x="10.485" y=".58"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="3.159"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="30.007" id="lobe-icons-antigravity-10-_R_0_" width="33.508" x="5.833" y="-12.467"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="2.669"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="26.151" id="lobe-icons-antigravity-11-_R_0_" width="22.194" x="-8.355" y="-8.876"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="3.303"></feGaussianBlur></filter></defs></svg></span><span>Antigravity</span></li>
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Gemini</title><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="#3186FF"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#lobe-icons-gemini-0-_R_0_)"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#lobe-icons-gemini-1-_R_0_)"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#lobe-icons-gemini-2-_R_0_)"></path><defs><linearGradient gradientUnits="userSpaceOnUse" id="lobe-icons-gemini-0-_R_0_" x1="7" x2="11" y1="15.5" y2="12"><stop stop-color="#08B962"></stop><stop offset="1" stop-color="#08B962" stop-opacity="0"></stop></linearGradient><linearGradient gradientUnits="userSpaceOnUse" id="lobe-icons-gemini-1-_R_0_" x1="8" x2="11.5" y1="5.5" y2="11"><stop stop-color="#F94543"></stop><stop offset="1" stop-color="#F94543" stop-opacity="0"></stop></linearGradient><linearGradient gradientUnits="userSpaceOnUse" id="lobe-icons-gemini-2-_R_0_" x1="3.5" x2="17.5" y1="13.5" y2="12"><stop stop-color="#FABC12"></stop><stop offset=".46" stop-color="#FABC12" stop-opacity="0"></stop></linearGradient></defs></svg></span><span>Google Gemini</span></li>
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Anthropic</title><path d="M13.827 3.52h3.603L24 20h-3.603l-6.57-16.48zm-7.258 0h3.767L16.906 20h-3.674l-1.343-3.461H5.017l-1.344 3.46H0L6.57 3.522zm4.132 9.959L8.453 7.687 6.205 13.48H10.7z"></path></svg></span><span>Anthropic</span></li>
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>OpenAI</title><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"></path></svg></span><span>OpenAI</span></li>
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Cursor</title><path d="M22.106 5.68L12.5.135a.998.998 0 00-.998 0L1.893 5.68a.84.84 0 00-.419.726v11.186c0 .3.16.577.42.727l9.607 5.547a.999.999 0 00.998 0l9.608-5.547a.84.84 0 00.42-.727V6.407a.84.84 0 00-.42-.726zm-.603 1.176L12.228 22.92c-.063.108-.228.064-.228-.061V12.34a.59.59 0 00-.295-.51l-9.11-5.26c-.107-.062-.063-.228.062-.228h18.55c.264 0 .428.286.296.514z"></path></svg></span><span>Cursor</span></li>
+        <li class="chip"><span class="chip-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>ModelContextProtocol</title><path d="M15.688 2.343a2.588 2.588 0 00-3.61 0l-9.626 9.44a.863.863 0 01-1.203 0 .823.823 0 010-1.18l9.626-9.44a4.313 4.313 0 016.016 0 4.116 4.116 0 011.204 3.54 4.3 4.3 0 013.609 1.18l.05.05a4.115 4.115 0 010 5.9l-8.706 8.537a.274.274 0 000 .393l1.788 1.754a.823.823 0 010 1.18.863.863 0 01-1.203 0l-1.788-1.753a1.92 1.92 0 010-2.754l8.706-8.538a2.47 2.47 0 000-3.54l-.05-.049a2.588 2.588 0 00-3.607-.003l-7.172 7.034-.002.002-.098.097a.863.863 0 01-1.204 0 .823.823 0 010-1.18l7.273-7.133a2.47 2.47 0 00-.003-3.537z"></path><path d="M14.485 4.703a.823.823 0 000-1.18.863.863 0 00-1.204 0l-7.119 6.982a4.115 4.115 0 000 5.9 4.314 4.314 0 006.016 0l7.12-6.982a.823.823 0 000-1.18.863.863 0 00-1.204 0l-7.119 6.982a2.588 2.588 0 01-3.61 0 2.47 2.47 0 010-3.54l7.12-6.982z"></path></svg></span><span>Model Context Protocol</span></li>
+    </ul>
   </div>
 </header>
 
-<section>
+<main>
+<section id="how">
   <div class="wrap">
-    <h2>The problem it solves</h2>
+    <p class="kicker">Why chrome.debugger</p>
+    <h2>Synthetic clicks don't work any more.</h2>
     <div class="callout">
       <p>
-        Synthetic events from content scripts carry <code>isTrusted: false</code>, and
+        Events dispatched from a content script carry <code>isTrusted: false</code>, and
         modern editors built on Lexical or React composers ignore them outright. That is
         why so much browser automation silently fails to type into a real text box.
       </p>
       <p>
-        AgentBrowser dispatches input through <code>chrome.debugger</code> instead. CDP
-        clicks and <code>Input.insertText</code> arrive exactly as a human's do. Because it
-        attaches to your existing profile, the manifest asks for
-        <code>debugger, tabs, storage, offscreen, sidePanel</code> and nothing else. No
-        host permissions at all.
+        AgentBrowser dispatches through <code>chrome.debugger</code> instead. CDP clicks and
+        <code>Input.insertText</code> arrive exactly as a human's do. Because it attaches to
+        your existing profile, the manifest asks for
+        <code>debugger, tabs, storage, offscreen, sidePanel</code> and nothing else:
+        no host permissions, no content scripts.
       </p>
     </div>
   </div>
@@ -160,46 +209,44 @@
 
 <section>
   <div class="wrap">
-    <h2>Architecture</h2>
+    <p class="kicker">Architecture</p>
+    <h2>One hub between the panel and the page.</h2>
     <figure>
-      <svg viewBox="0 0 860 250" role="img" aria-label="Side panel talks to the service worker, which talks to the hub. The service worker drives Chrome tabs over CDP. The hub runs adapters and an MCP proxy.">
+      <svg viewBox="0 0 880 250" role="img" aria-label="Diagram: the side panel connects to the service worker over a runtime Port; the service worker connects to the hub on 127.0.0.1 port 9010 over WebSocket; the service worker drives Chrome tabs through chrome.debugger; the hub runs the adapters and the MCP proxy.">
         <defs>
-          <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
-            <path d="M0,0 L9,4.5 L0,9 z" fill="currentColor"/>
+          <marker id="a" markerWidth="9" markerHeight="9" refX="8.5" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 z" fill="#6f7d75"/>
           </marker>
         </defs>
-        <g style="color: var(--muted)" fill="none" stroke="currentColor" stroke-width="1.5">
-          <line x1="176" y1="52" x2="288" y2="52" marker-end="url(#ar)"/>
-          <line x1="448" y1="52" x2="560" y2="52" marker-end="url(#ar)"/>
-          <line x1="368" y1="86" x2="368" y2="152" marker-end="url(#ar)"/>
-          <line x1="672" y1="86" x2="672" y2="152" marker-end="url(#ar)"/>
+        <g fill="none" stroke="#6f7d75" stroke-width="1.5">
+          <line x1="182" y1="52" x2="292" y2="52" marker-end="url(#a)"/>
+          <line x1="452" y1="52" x2="562" y2="52" marker-end="url(#a)"/>
+          <line x1="372" y1="88" x2="372" y2="150" marker-end="url(#a)"/>
+          <line x1="700" y1="88" x2="700" y2="150" marker-end="url(#a)"/>
         </g>
         <g font-family="ui-monospace, monospace" font-size="13">
-          <g style="color: var(--ink)" fill="currentColor">
-            <rect x="16" y="28" width="160" height="48" rx="8" fill="var(--panel)" stroke="var(--line)"/>
-            <text x="96" y="50" text-anchor="middle">side panel</text>
-            <text x="96" y="66" text-anchor="middle" font-size="11" fill="var(--muted)">chat UI</text>
+          <rect x="16" y="28" width="166" height="50" rx="9" fill="#0f1512" stroke="#1f2b25"/>
+          <text x="99" y="50" text-anchor="middle" fill="#dbe5df">side panel</text>
+          <text x="99" y="67" text-anchor="middle" font-size="11" fill="#6f7d75">chat UI</text>
 
-            <rect x="288" y="28" width="160" height="48" rx="8" fill="var(--panel)" stroke="var(--line)"/>
-            <text x="368" y="50" text-anchor="middle">service worker</text>
-            <text x="368" y="66" text-anchor="middle" font-size="11" fill="var(--muted)">sw.js</text>
+          <rect x="292" y="28" width="160" height="50" rx="9" fill="#0f1512" stroke="#1f2b25"/>
+          <text x="372" y="50" text-anchor="middle" fill="#dbe5df">service worker</text>
+          <text x="372" y="67" text-anchor="middle" font-size="11" fill="#6f7d75">sw.js</text>
 
-            <rect x="560" y="28" width="284" height="48" rx="8" fill="var(--panel)" stroke="var(--line)"/>
-            <text x="702" y="50" text-anchor="middle">hub</text>
-            <text x="702" y="66" text-anchor="middle" font-size="11" fill="var(--muted)">127.0.0.1:9010</text>
+          <rect x="562" y="28" width="292" height="50" rx="9" fill="#0f1512" stroke="#1f2b25"/>
+          <text x="708" y="50" text-anchor="middle" fill="#dbe5df">hub</text>
+          <text x="708" y="67" text-anchor="middle" font-size="11" fill="#6f7d75">127.0.0.1:9010</text>
 
-            <rect x="256" y="152" width="224" height="62" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
-            <text x="368" y="176" text-anchor="middle" fill="var(--accent)">chrome.debugger</text>
-            <text x="368" y="194" text-anchor="middle" font-size="11" fill="var(--muted)">trusted CDP input</text>
+          <rect x="258" y="150" width="228" height="64" rx="9" fill="rgba(34,197,94,.13)" stroke="#22c55e"/>
+          <text x="372" y="175" text-anchor="middle" fill="#2ee06d">chrome.debugger</text>
+          <text x="372" y="194" text-anchor="middle" font-size="11" fill="#9aa8a0">trusted CDP input</text>
 
-            <rect x="560" y="152" width="284" height="62" rx="8" fill="var(--panel)" stroke="var(--line)"/>
-            <text x="702" y="176" text-anchor="middle">adapters</text>
-            <text x="702" y="194" text-anchor="middle" font-size="11" fill="var(--muted)">SDK · CLI · API · mcp-proxy</text>
-          </g>
-          <g fill="var(--muted)" font-size="10.5">
-            <text x="232" y="44" text-anchor="middle">Port</text>
-            <text x="504" y="44" text-anchor="middle">WebSocket</text>
-          </g>
+          <rect x="562" y="150" width="292" height="64" rx="9" fill="#0f1512" stroke="#1f2b25"/>
+          <text x="708" y="175" text-anchor="middle" fill="#dbe5df">adapters</text>
+          <text x="708" y="194" text-anchor="middle" font-size="11" fill="#6f7d75">SDK · CLI · API · mcp-proxy</text>
+
+          <text x="237" y="45" text-anchor="middle" font-size="10.5" fill="#6f7d75">Port</text>
+          <text x="507" y="45" text-anchor="middle" font-size="10.5" fill="#6f7d75">WebSocket</text>
         </g>
       </svg>
       <figcaption>
@@ -210,99 +257,156 @@
   </div>
 </section>
 
-<section>
+<section id="agents">
   <div class="wrap">
-    <h2>Install</h2>
-<pre><span class="c">git</span> clone https://github.com/VasiHemanth/agentbrowser.git
-<span class="c">cd</span> agentbrowser/server
-npm install
-npm start          <span class="c"># listens on ws://127.0.0.1:9010</span></pre>
-    <p class="muted">
-      Then open <code>chrome://extensions</code>, enable Developer mode, choose
-      Load unpacked, and select the repo's <code>extension/</code> directory. Click the
-      toolbar icon; the status dot turns green when the hub is reachable.
+    <p class="kicker">Adapters</p>
+    <h2>Bring your own coding agent.</h2>
+    <p class="lead-p" style="margin-bottom:24px">
+      Pick one per chat, or set a default in <code>server/config.json</code>. Six CLIs run
+      one process per turn and resume their own session; two call a provider API
+      directly; two are Claude-native.
     </p>
-    <p class="muted">Needs Chrome and Node.js 20.11 or newer.</p>
+    <div class="grid">
+        <article class="card">
+          <div class="card-hd"><span class="card-ico"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Claude</title><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="#D97757" fill-rule="nonzero"></path></svg></span><h3>claude-agent-sdk</h3></div>
+          <p>Runs in the hub process. Tools exposed as an in-process MCP server; screenshots come back as images the model can see.</p>
+        </article>
+        <article class="card">
+          <div class="card-hd"><span class="card-ico"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Claude Code</title><path clip-rule="evenodd" d="M20.998 10.949H24v3.102h-3v3.028h-1.487V20H18v-2.921h-1.487V20H15v-2.921H9V20H7.488v-2.921H6V20H4.487v-2.921H3V14.05H0V10.95h3V5h17.998v5.949zM6 10.949h1.488V8.102H6v2.847zm10.51 0H18V8.102h-1.49v2.847z" fill="#D97757" fill-rule="evenodd"></path></svg></span><h3>claude-cli</h3></div>
+          <p>Spawns <code>claude -p</code> in stream-json mode, kept alive for the session. Full Claude Code toolset alongside the browser tools.</p>
+        </article>
+        <article class="card">
+          <div class="card-hd"><span class="card-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Codex</title><path clip-rule="evenodd" d="M8.086.457a6.105 6.105 0 013.046-.415c1.333.153 2.521.72 3.564 1.7a.117.117 0 00.107.029c1.408-.346 2.762-.224 4.061.366l.063.03.154.076c1.357.703 2.33 1.77 2.918 3.198.278.679.418 1.388.421 2.126a5.655 5.655 0 01-.18 1.631.167.167 0 00.04.155 5.982 5.982 0 011.578 2.891c.385 1.901-.01 3.615-1.183 5.14l-.182.22a6.063 6.063 0 01-2.934 1.851.162.162 0 00-.108.102c-.255.736-.511 1.364-.987 1.992-1.199 1.582-2.962 2.462-4.948 2.451-1.583-.008-2.986-.587-4.21-1.736a.145.145 0 00-.14-.032c-.518.167-1.04.191-1.604.185a5.924 5.924 0 01-2.595-.622 6.058 6.058 0 01-2.146-1.781c-.203-.269-.404-.522-.551-.821a7.74 7.74 0 01-.495-1.283 6.11 6.11 0 01-.017-3.064.166.166 0 00.008-.074.115.115 0 00-.037-.064 5.958 5.958 0 01-1.38-2.202 5.196 5.196 0 01-.333-1.589 6.915 6.915 0 01.188-2.132c.45-1.484 1.309-2.648 2.577-3.493.282-.188.55-.334.802-.438.286-.12.573-.22.861-.304a.129.129 0 00.087-.087A6.016 6.016 0 015.635 2.31C6.315 1.464 7.132.846 8.086.457zm-.804 7.85a.848.848 0 00-1.473.842l1.694 2.965-1.688 2.848a.849.849 0 001.46.864l1.94-3.272a.849.849 0 00.007-.854l-1.94-3.393zm5.446 6.24a.849.849 0 000 1.695h4.848a.849.849 0 000-1.696h-4.848z"></path></svg></span><h3>codex</h3></div>
+          <p><code>codex exec --json</code>, resumed via <code>codex exec resume</code>, MCP attached per invocation.</p>
+        </article>
+        <article class="card">
+          <div class="card-hd"><span class="card-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>opencode</title><path d="M16 6H8v12h8V6zm4 16H4V2h16v20z"></path></svg></span><h3>opencode</h3></div>
+          <p><code>opencode run --format json</code>, resumed via <code>-s</code>, MCP through a generated <code>opencode.json</code>.</p>
+        </article>
+        <article class="card">
+          <div class="card-hd"><span class="card-ico"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Copilot</title><path d="M17.533 1.829A2.528 2.528 0 0015.11 0h-.737a2.531 2.531 0 00-2.484 2.087l-1.263 6.937.314-1.08a2.528 2.528 0 012.424-1.833h4.284l1.797.706 1.731-.706h-.505a2.528 2.528 0 01-2.423-1.829l-.715-2.453z" fill="url(#lobe-icons-copilot-0-_R_0_)" transform="translate(0 1)"></path><path d="M6.726 20.16A2.528 2.528 0 009.152 22h1.566c1.37 0 2.49-1.1 2.525-2.48l.17-6.69-.357 1.228a2.528 2.528 0 01-2.423 1.83h-4.32l-1.54-.842-1.667.843h.497c1.124 0 2.113.75 2.426 1.84l.697 2.432z" fill="url(#lobe-icons-copilot-1-_R_0_)" transform="translate(0 1)"></path><path d="M15 0H6.252c-2.5 0-4 3.331-5 6.662-1.184 3.947-2.734 9.225 1.75 9.225H6.78c1.13 0 2.12-.753 2.43-1.847.657-2.317 1.809-6.359 2.713-9.436.46-1.563.842-2.906 1.43-3.742A1.97 1.97 0 0115 0" fill="url(#lobe-icons-copilot-2-_R_0_)" transform="translate(0 1)"></path><path d="M15 0H6.252c-2.5 0-4 3.331-5 6.662-1.184 3.947-2.734 9.225 1.75 9.225H6.78c1.13 0 2.12-.753 2.43-1.847.657-2.317 1.809-6.359 2.713-9.436.46-1.563.842-2.906 1.43-3.742A1.97 1.97 0 0115 0" fill="url(#lobe-icons-copilot-3-_R_0_)" transform="translate(0 1)"></path><path d="M9 22h8.749c2.5 0 4-3.332 5-6.663 1.184-3.948 2.734-9.227-1.75-9.227H17.22c-1.129 0-2.12.754-2.43 1.848a1149.2 1149.2 0 01-2.713 9.437c-.46 1.564-.842 2.907-1.43 3.743A1.97 1.97 0 019 22" fill="url(#lobe-icons-copilot-4-_R_0_)" transform="translate(0 1)"></path><path d="M9 22h8.749c2.5 0 4-3.332 5-6.663 1.184-3.948 2.734-9.227-1.75-9.227H17.22c-1.129 0-2.12.754-2.43 1.848a1149.2 1149.2 0 01-2.713 9.437c-.46 1.564-.842 2.907-1.43 3.743A1.97 1.97 0 019 22" fill="url(#lobe-icons-copilot-5-_R_0_)" transform="translate(0 1)"></path><defs><radialGradient cx="85.44%" cy="100.653%" fx="85.44%" fy="100.653%" gradientTransform="scale(-.8553 -1) rotate(50.927 2.041 -1.946)" id="lobe-icons-copilot-0-_R_0_" r="105.116%"><stop offset="9.6%" stop-color="#00AEFF"></stop><stop offset="77.3%" stop-color="#2253CE"></stop><stop offset="100%" stop-color="#0736C4"></stop></radialGradient><radialGradient cx="18.143%" cy="32.928%" fx="18.143%" fy="32.928%" gradientTransform="scale(.8897 1) rotate(52.069 .193 .352)" id="lobe-icons-copilot-1-_R_0_" r="95.612%"><stop offset="0%" stop-color="#FFB657"></stop><stop offset="63.4%" stop-color="#FF5F3D"></stop><stop offset="92.3%" stop-color="#C02B3C"></stop></radialGradient><radialGradient cx="82.987%" cy="-9.792%" fx="82.987%" fy="-9.792%" gradientTransform="scale(-1 -.9441) rotate(-70.872 .142 1.17)" id="lobe-icons-copilot-4-_R_0_" r="140.622%"><stop offset="6.6%" stop-color="#8C48FF"></stop><stop offset="50%" stop-color="#F2598A"></stop><stop offset="89.6%" stop-color="#FFB152"></stop></radialGradient><linearGradient id="lobe-icons-copilot-2-_R_0_" x1="39.465%" x2="46.884%" y1="12.117%" y2="103.774%"><stop offset="15.6%" stop-color="#0D91E1"></stop><stop offset="48.7%" stop-color="#52B471"></stop><stop offset="65.2%" stop-color="#98BD42"></stop><stop offset="93.7%" stop-color="#FFC800"></stop></linearGradient><linearGradient id="lobe-icons-copilot-3-_R_0_" x1="45.949%" x2="50%" y1="0%" y2="100%"><stop offset="0%" stop-color="#3DCBFF"></stop><stop offset="24.7%" stop-color="#0588F7" stop-opacity="0"></stop></linearGradient><linearGradient id="lobe-icons-copilot-5-_R_0_" x1="83.507%" x2="83.453%" y1="-6.106%" y2="21.131%"><stop offset="5.8%" stop-color="#F8ADFA"></stop><stop offset="70.8%" stop-color="#A86EDD" stop-opacity="0"></stop></linearGradient></defs></svg></span><h3>copilot</h3></div>
+          <p><code>copilot -p -s</code> with a deterministic <code>--session-id</code> reused every turn.</p>
+        </article>
+        <article class="card">
+          <div class="card-hd"><span class="card-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Grok</title><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"></path></svg></span><h3>grok</h3></div>
+          <p><code>grok -p --output-format json</code>, resumed via <code>--resume</code>, MCP through a generated <code>.grok/config.toml</code>.</p>
+        </article>
+        <article class="card">
+          <div class="card-hd"><span class="card-ico"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Antigravity</title><mask height="23" id="lobe-icons-antigravity-0-_R_0_" maskUnits="userSpaceOnUse" width="24" x="0" y="1"><path d="M21.751 22.607c1.34 1.005 3.35.335 1.508-1.508C17.73 15.74 18.904 1 12.037 1 5.17 1 6.342 15.74.815 21.1c-2.01 2.009.167 2.511 1.507 1.506 5.192-3.517 4.857-9.714 9.715-9.714 4.857 0 4.522 6.197 9.714 9.715z" fill="#fff"></path></mask><g mask="url(#lobe-icons-antigravity-0-_R_0_)"><g filter="url(#lobe-icons-antigravity-1-_R_0_)"><path d="M-1.018-3.992c-.408 3.591 2.686 6.89 6.91 7.37 4.225.48 7.98-2.043 8.387-5.633.408-3.59-2.686-6.89-6.91-7.37-4.225-.479-7.98 2.043-8.387 5.633z" fill="#FFE432"></path></g><g filter="url(#lobe-icons-antigravity-2-_R_0_)"><path d="M15.269 7.747c1.058 4.557 5.691 7.374 10.348 6.293 4.657-1.082 7.575-5.653 6.516-10.21-1.058-4.556-5.691-7.374-10.348-6.292-4.657 1.082-7.575 5.653-6.516 10.21z" fill="#FC413D"></path></g><g filter="url(#lobe-icons-antigravity-3-_R_0_)"><path d="M-12.443 10.804c1.338 4.703 7.36 7.11 13.453 5.378 6.092-1.733 9.947-6.95 8.61-11.652C8.282-.173 2.26-2.58-3.833-.848-9.925.884-13.78 6.1-12.443 10.804z" fill="#00B95C"></path></g><g filter="url(#lobe-icons-antigravity-4-_R_0_)"><path d="M-12.443 10.804c1.338 4.703 7.36 7.11 13.453 5.378 6.092-1.733 9.947-6.95 8.61-11.652C8.282-.173 2.26-2.58-3.833-.848-9.925.884-13.78 6.1-12.443 10.804z" fill="#00B95C"></path></g><g filter="url(#lobe-icons-antigravity-5-_R_0_)"><path d="M-7.608 14.703c3.352 3.424 9.126 3.208 12.896-.483 3.77-3.69 4.108-9.459.756-12.883C2.69-2.087-3.083-1.871-6.853 1.82c-3.77 3.69-4.108 9.458-.755 12.883z" fill="#00B95C"></path></g><g filter="url(#lobe-icons-antigravity-6-_R_0_)"><path d="M9.932 27.617c1.04 4.482 5.384 7.303 9.7 6.3 4.316-1.002 6.971-5.448 5.93-9.93-1.04-4.483-5.384-7.304-9.7-6.301-4.316 1.002-6.971 5.448-5.93 9.93z" fill="#3186FF"></path></g><g filter="url(#lobe-icons-antigravity-7-_R_0_)"><path d="M2.572-8.185C.392-3.329 2.778 2.472 7.9 4.771c5.122 2.3 11.042.227 13.222-4.63 2.18-4.855-.205-10.656-5.327-12.955-5.122-2.3-11.042-.227-13.222 4.63z" fill="#FBBC04"></path></g><g filter="url(#lobe-icons-antigravity-8-_R_0_)"><path d="M-3.267 38.686c-5.277-2.072 3.742-19.117 5.984-24.83 2.243-5.712 8.34-8.664 13.616-6.592 5.278 2.071 11.533 13.482 9.29 19.195-2.242 5.713-23.613 14.298-28.89 12.227z" fill="#3186FF"></path></g><g filter="url(#lobe-icons-antigravity-9-_R_0_)"><path d="M28.71 17.471c-1.413 1.649-5.1.808-8.236-1.878-3.135-2.687-4.531-6.201-3.118-7.85 1.412-1.649 5.1-.808 8.235 1.878s4.532 6.2 3.119 7.85z" fill="#749BFF"></path></g><g filter="url(#lobe-icons-antigravity-10-_R_0_)"><path d="M18.163 9.077c5.81 3.93 12.502 4.19 14.946.577 2.443-3.612-.287-9.727-6.098-13.658-5.81-3.931-12.502-4.19-14.946-.577-2.443 3.612.287 9.727 6.098 13.658z" fill="#FC413D"></path></g><g filter="url(#lobe-icons-antigravity-11-_R_0_)"><path d="M-.915 2.684c-1.44 3.473-.97 6.967 1.05 7.804 2.02.837 4.824-1.3 6.264-4.772 1.44-3.473.97-6.967-1.05-7.804-2.02-.837-4.824 1.3-6.264 4.772z" fill="#FFEE48"></path></g></g><defs><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="17.587" id="lobe-icons-antigravity-1-_R_0_" width="19.838" x="-3.288" y="-11.917"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="1.117"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="38.565" id="lobe-icons-antigravity-2-_R_0_" width="38.9" x="4.251" y="-13.493"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="5.4"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="36.517" id="lobe-icons-antigravity-3-_R_0_" width="40.955" x="-21.889" y="-10.592"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="4.591"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="36.517" id="lobe-icons-antigravity-4-_R_0_" width="40.955" x="-21.889" y="-10.592"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="4.591"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="36.595" id="lobe-icons-antigravity-5-_R_0_" width="36.632" x="-19.099" y="-10.278"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="4.591"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="34.087" id="lobe-icons-antigravity-6-_R_0_" width="33.533" x=".981" y="8.758"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="4.363"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="35.276" id="lobe-icons-antigravity-7-_R_0_" width="35.978" x="-6.143" y="-21.659"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="3.954"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="46.523" id="lobe-icons-antigravity-8-_R_0_" width="45.114" x="-11.96" y="-.46"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="3.531"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="24.054" id="lobe-icons-antigravity-9-_R_0_" width="25.094" x="10.485" y=".58"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="3.159"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="30.007" id="lobe-icons-antigravity-10-_R_0_" width="33.508" x="5.833" y="-12.467"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="2.669"></feGaussianBlur></filter><filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="26.151" id="lobe-icons-antigravity-11-_R_0_" width="22.194" x="-8.355" y="-8.876"><feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend><feGaussianBlur result="effect1_foregroundBlur_977_115" stdDeviation="3.303"></feGaussianBlur></filter></defs></svg></span><h3>agy</h3></div>
+          <p><code>agy -p</code>, conversation id discovered by diffing the conversations dir, MCP registered merge-only.</p>
+        </article>
+        <article class="card">
+          <div class="card-hd"><span class="card-ico"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Gemini</title><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="#3186FF"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#lobe-icons-gemini-0-_R_0_)"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#lobe-icons-gemini-1-_R_0_)"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#lobe-icons-gemini-2-_R_0_)"></path><defs><linearGradient gradientUnits="userSpaceOnUse" id="lobe-icons-gemini-0-_R_0_" x1="7" x2="11" y1="15.5" y2="12"><stop stop-color="#08B962"></stop><stop offset="1" stop-color="#08B962" stop-opacity="0"></stop></linearGradient><linearGradient gradientUnits="userSpaceOnUse" id="lobe-icons-gemini-1-_R_0_" x1="8" x2="11.5" y1="5.5" y2="11"><stop stop-color="#F94543"></stop><stop offset="1" stop-color="#F94543" stop-opacity="0"></stop></linearGradient><linearGradient gradientUnits="userSpaceOnUse" id="lobe-icons-gemini-2-_R_0_" x1="3.5" x2="17.5" y1="13.5" y2="12"><stop stop-color="#FABC12"></stop><stop offset=".46" stop-color="#FABC12" stop-opacity="0"></stop></linearGradient></defs></svg></span><h3>gemini</h3></div>
+          <p><code>gemini -p -o stream-json</code>, resumed via <code>-r</code>, other MCP servers excluded by name.</p>
+        </article>
+        <article class="card">
+          <div class="card-hd"><span class="card-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Anthropic</title><path d="M13.827 3.52h3.603L24 20h-3.603l-6.57-16.48zm-7.258 0h3.767L16.906 20h-3.674l-1.343-3.461H5.017l-1.344 3.46H0L6.57 3.522zm4.132 9.959L8.453 7.687 6.205 13.48H10.7z"></path></svg></span><h3>anthropic-api</h3></div>
+          <p>Calls the Anthropic API directly. No CLI needed; the key lives in <code>~/.agentchat/keys.json</code> at mode 0600.</p>
+        </article>
+        <article class="card">
+          <div class="card-hd"><span class="card-ico"><svg class="ico" aria-hidden="true" focusable="false" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>OpenAI</title><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"></path></svg></span><h3>openai-api</h3></div>
+          <p>Calls the OpenAI API directly. Same ten browser tools, no file or shell tools.</p>
+        </article>
+    </div>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <h2>Ten browser tools</h2>
+    <p class="kicker">Any MCP harness</p>
+    <h2>Not on the list? Point it at the proxy.</h2>
+    <p class="lead-p">
+      <code>server/mcp-proxy.mjs</code> is a stdio MCP server that forwards tool calls to
+      the hub. Anything that speaks the Model Context Protocol gets the same ten tools.
+    </p>
+<pre>{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"agentbrowser"</span>: {
+      <span class="k">"command"</span>: "node",
+      <span class="k">"args"</span>: ["/absolute/path/to/agentbrowser/server/mcp-proxy.mjs"]
+    }
+  }
+}</pre>
+    <p class="muted" style="margin:0">
+      Cursor, Codex, Gemini CLI and Claude Code all take a config in this shape; only
+      the file name differs.
+    </p>
+  </div>
+</section>
+
+<section id="tools">
+  <div class="wrap">
+    <p class="kicker">Browser tools</p>
+    <h2>Ten tools, every adapter.</h2>
     <div class="scroll">
-      <table class="tbl">
-        <thead><tr><th>tool</th><th>args</th><th>result</th></tr></thead>
+      <table>
+        <caption>Omit <code>tabId</code> to act on the active tab.</caption>
+        <thead><tr><th scope="col">tool</th><th scope="col">args</th><th scope="col">result</th></tr></thead>
         <tbody>
-          <tr><td>tabs_list</td><td><code>{}</code></td><td>every open tab with id, url, title, active</td></tr>
-          <tr><td>tab_new</td><td><code>{url?}</code></td><td>the new tabId</td></tr>
-          <tr><td>tab_close</td><td><code>{tabId}</code></td><td>confirmation</td></tr>
-          <tr><td>navigate</td><td><code>{url, tabId?}</code></td><td>url and title after load, 20s cap</td></tr>
-          <tr><td>read_page</td><td><code>{tabId?, maxChars?}</code></td><td>innerText, 60k char default cap</td></tr>
-          <tr><td>screenshot</td><td><code>{tabId?}</code></td><td>base64 PNG</td></tr>
-          <tr><td>click</td><td><code>{x, y, tabId?}</code></td><td>trusted CDP click</td></tr>
-          <tr><td>type_text</td><td><code>{text, tabId?}</code></td><td>inserts into the focused element</td></tr>
-          <tr><td>press_key</td><td><code>{key, tabId?}</code></td><td>e.g. Enter, Escape, Meta+A</td></tr>
-          <tr><td>eval_js</td><td><code>{expression, tabId?}</code></td><td>the evaluated value</td></tr>
+            <tr><th scope="row"><code>tabs_list</code></th><td><code>{}</code></td><td>every open tab with id, url, title, active</td></tr>
+            <tr><th scope="row"><code>tab_new</code></th><td><code>{url?}</code></td><td>the new tabId</td></tr>
+            <tr><th scope="row"><code>tab_close</code></th><td><code>{tabId}</code></td><td>confirmation</td></tr>
+            <tr><th scope="row"><code>navigate</code></th><td><code>{url, tabId?}</code></td><td>url and title after load, 20s cap</td></tr>
+            <tr><th scope="row"><code>read_page</code></th><td><code>{tabId?, maxChars?}</code></td><td>innerText, 60k char default cap</td></tr>
+            <tr><th scope="row"><code>screenshot</code></th><td><code>{tabId?}</code></td><td>base64 PNG</td></tr>
+            <tr><th scope="row"><code>click</code></th><td><code>{x, y, tabId?}</code></td><td>trusted CDP click</td></tr>
+            <tr><th scope="row"><code>type_text</code></th><td><code>{text, tabId?}</code></td><td>inserts into the focused element</td></tr>
+            <tr><th scope="row"><code>press_key</code></th><td><code>{key, tabId?}</code></td><td>e.g. Enter, Escape, Meta+A</td></tr>
+            <tr><th scope="row"><code>eval_js</code></th><td><code>{expression, tabId?}</code></td><td>the evaluated value</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="muted" style="margin-top:16px">
-      Omit <code>tabId</code> to act on the active tab. The service worker attaches the
-      debugger on demand, serializes commands per tab, and re-attaches if Chrome detaches it.
+    <p class="muted" style="margin-top:16px;font-size:14.5px">
+      The service worker attaches the debugger on demand, serializes commands per tab,
+      and re-attaches if Chrome detaches it.
     </p>
   </div>
 </section>
 
-<section>
+<section id="install">
   <div class="wrap">
-    <h2>Bring your own backend</h2>
-    <div class="grid">
-      <div class="card">
-        <h3>claude-agent-sdk</h3>
-        <p>Runs in the hub process. Tools exposed as an in-process MCP server; screenshots come back as images the model can see.</p>
-      </div>
-      <div class="card">
-        <h3>claude-cli</h3>
-        <p>Spawns <code>claude -p</code> in stream-json mode, kept alive for the session. Full Claude Code toolset alongside the browser tools.</p>
-      </div>
-      <div class="card">
-        <h3>codex · opencode · copilot</h3>
-        <p>One process per turn, resumed through each CLI's own session mechanism. Browser tools attach over the stdio MCP proxy.</p>
-      </div>
-      <div class="card">
-        <h3>grok · agy · gemini</h3>
-        <p>Same generic CLI wrapper, each with its own resume flag and MCP config shape.</p>
-      </div>
-      <div class="card">
-        <h3>anthropic-api · openai-api</h3>
-        <p>Talk to the provider directly, no CLI needed. Keys live in <code>~/.agentchat/keys.json</code> at mode 0600 and never reach the panel.</p>
-      </div>
-      <div class="card">
-        <h3>Anything that speaks MCP</h3>
-        <p><code>mcp-proxy.mjs</code> is a stdio MCP server forwarding to the hub. Point Cursor, Gemini CLI or another Claude Code at it.</p>
-      </div>
-    </div>
+    <p class="kicker">Install</p>
+    <h2>Running in about a minute.</h2>
+<pre><span class="c">$</span> git clone https://github.com/VasiHemanth/agentbrowser.git
+<span class="c">$</span> cd agentbrowser/server
+<span class="c">$</span> npm install
+<span class="c">$</span> npm start          <span class="c"># listens on ws://127.0.0.1:9010</span></pre>
+    <ol class="steps">
+      <li>Open <code>chrome://extensions</code> and enable Developer mode.</li>
+      <li>Choose Load unpacked and select the repo's <code>extension/</code> directory.</li>
+      <li>Click the AgentBrowser toolbar icon to open the side panel.</li>
+      <li>The status dot turns green when the hub is reachable. Send a message.</li>
+    </ol>
+    <p class="muted" style="margin-top:18px">Requires Chrome and Node.js 20.11 or newer. MIT licensed.</p>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <h2>Worth knowing before you install</h2>
+    <p class="kicker">Before you install</p>
+    <h2>Known constraints.</h2>
     <ul class="plain">
       <li>Chrome allows one debugger client per tab. With DevTools open on a tab, tool calls on that tab fail until it detaches.</li>
       <li>Chrome shows an "is being debugged" infobar while attached. Dismissing it detaches; the next tool call re-attaches.</li>
-      <li>The hub accepts one extension connection. A second profile displaces the first.</li>
-      <li>Filling a form is not permission to submit it. The harness will not click submit, send, post or buy unless you asked.</li>
-      <li>API keys are stored in plain text, protected by file permissions, not encrypted.</li>
+      <li>The hub accepts one extension connection. A second Chrome profile displaces the first.</li>
+      <li>Filling a form is not permission to submit it. The agent will not click submit, send, post or buy unless you asked.</li>
+      <li>API keys sit in <code>~/.agentchat/keys.json</code> in plain text, protected by file permissions, not encrypted.</li>
     </ul>
   </div>
 </section>
+</main>
 
 <footer>
   <div class="wrap">
-    MIT licensed ·
-    <a href="https://github.com/VasiHemanth/agentbrowser">github.com/VasiHemanth/agentbrowser</a> ·
-    <a href="https://github.com/VasiHemanth/agentbrowser/blob/main/PROTOCOL.md">PROTOCOL.md</a> is the source of truth
+    <p>
+      MIT licensed · <a href="https://github.com/VasiHemanth/agentbrowser">github.com/VasiHemanth/agentbrowser</a> ·
+      <a href="https://github.com/VasiHemanth/agentbrowser/blob/main/PROTOCOL.md">PROTOCOL.md</a> is the source of truth ·
+      <a href="https://github.com/VasiHemanth/agentbrowser/blob/main/DESIGN.md">DESIGN.md</a> covers the why
+    </p>
+    <p>
+      Product names and logos are trademarks of their respective owners. Their use here
+      indicates compatibility only and does not imply affiliation or endorsement.
+    </p>
   </div>
 </footer>
 

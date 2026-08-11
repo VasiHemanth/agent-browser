@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vasihemanth.github.io/agentbrowser/sitemap.xml
