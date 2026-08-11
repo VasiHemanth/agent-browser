@@ -197,6 +197,19 @@ Qwen CLI, Codex, Gemini CLI and Claude Code all take a config in this shape;
 only the file name differs (`config.toml` for Codex, `settings.json` for
 Gemini, `.mcp.json` for Claude Code).
 
+Three more take the same server definition under a different key:
+
+| client | where the server goes |
+|---|---|
+| [OpenClaw](https://docs.openclaw.ai/cli/mcp) | `mcp.servers` in `openclaw.json`, or `openclaw mcp add browser --command node --arg <path>` |
+| [Muse Code](https://dev.meta.ai/docs/muse-code/extending) | `mcp_servers` in the settings file, with `"transport": "stdio"` |
+| [Hermes Agent](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp) | `mcp_servers` in `~/.hermes/config.yaml`, or `hermes mcp add browser --command node --args <path>` |
+
+The one requirement is **stdio** transport, since `mcp-proxy.mjs` is a stdio
+server. A client that only speaks HTTP to MCP servers cannot reach it as
+things stand. Prime Agent is the case in point: it is an MCP client, but its
+host "drops non-HTTP entries", so stdio servers never reach the kernel.
+
 Python agent frameworks reach it the same way. LangGraph and DeepAgents both
 load stdio MCP servers through
 [`langchain-mcp-adapters`](https://github.com/langchain-ai/langchain-mcp-adapters):
