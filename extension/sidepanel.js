@@ -896,6 +896,7 @@ function init() {
     statusDot.classList.toggle("up", up);
     statusDot.classList.toggle("down", !up);
     statusDot.title = up ? "hub connected" : "hub disconnected";
+    statusDot.setAttribute("aria-label", up ? "Hub connected" : "Hub disconnected");
     banner.hidden = up;
     updateControls();
   }
@@ -908,6 +909,7 @@ function init() {
     micBtn.disabled = !connected;
     abortBtn.hidden = !streaming;
     statusDot.classList.toggle("working", connected && streaming);
+    statusDot.setAttribute("aria-label", connected && streaming ? "Agent working" : connected ? "Hub connected" : "Hub disconnected");
     // The disconnect unwind renders Retry while the Port is down; it comes back
     // to life on its own once the reconnect delivers a fresh status.
     if (retryBtn) retryBtn.disabled = !canRetry(connected, streaming, lastSentPayload);

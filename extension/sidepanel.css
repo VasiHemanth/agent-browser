@@ -144,10 +144,11 @@ img {
   justify-content: center;
   width: 22px;
   height: 22px;
-  border-radius: var(--ac-radius-control);
-  background: var(--ac-accent-tint);
-  color: var(--ac-accent);
   flex: none;
+}
+
+#logo svg {
+  display: block;
 }
 
 #title {
@@ -159,30 +160,70 @@ img {
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
   flex: none;
 }
 
-.dot.up {
+.dot::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot.up::after {
   background: var(--ac-accent);
   box-shadow: 0 0 0 3px var(--ac-accent-tint);
 }
 
-/* Connected and working. The only looping motion in the header. */
-.dot.up.working {
-  animation: ac-dot-live var(--ac-loop-status) var(--ac-ease-loop) infinite;
-}
-
-.dot.down {
+.dot.down::after {
   background: var(--ac-error);
   box-shadow: 0 0 0 3px var(--ac-error-bg);
 }
 
-@keyframes ac-dot-live {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+.ab-loader {
+  display: none;
+  width: 18px;
+  height: 18px;
+}
+
+.dot.working::after {
+  display: none;
+}
+
+.dot.working .ab-loader {
+  display: block;
+}
+
+@keyframes ab-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ab-iris {
+  0%, 100% { x: 438px; width: 124px; }
+  50% { x: 392px; width: 216px; }
+}
+
+@keyframes ab-core {
+  0%, 100% { r: 112px; }
+  50% { r: 58px; }
+}
+
+.ab-loader .ab-blades {
+  transform-box: view-box;
+  transform-origin: 500px 500px;
+  animation: ab-spin 3.4s linear infinite;
+}
+
+.ab-loader .ab-blade {
+  animation: ab-iris 2.2s ease-in-out infinite;
+}
+
+.ab-loader .ab-core {
+  animation: ab-core 2.2s ease-in-out infinite;
 }
 
 #adapter,
@@ -1213,6 +1254,11 @@ button:disabled {
 /* ----- reduced motion: state stays readable, nothing loops ----- */
 
 @media (prefers-reduced-motion: reduce) {
+  .ab-loader .ab-blades,
+  .ab-loader .ab-blade,
+  .ab-loader .ab-core {
+    animation: none;
+  }
   .dot.up.working,
   .msg.assistant.streaming:empty::after,
   .msg.assistant.streaming > :last-child::after,

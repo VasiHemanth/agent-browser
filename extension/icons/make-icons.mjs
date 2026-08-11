@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Procedurally generates the AgentChat extension icon set (16/32/48/128 px PNGs).
+// Procedurally generates the AgentBrowser iris extension icon set (16/32/48/128 px PNGs).
 //
-// Identity: vivid green chat bubble + white lightning bolt glyph on a
-// near-black rounded-square background (matches the AgentBrowser look).
+// Identity: vivid green iris ring and white core on a near-black rounded-square
+// background. The vector source of truth is agentbrowser-mark.svg.
 //
 // Pipeline: draw a single 4x-supersampled master raster (512x512, i.e. the
 // 128px canvas at 4x) using binary containment tests (rounded-rect distance
@@ -168,13 +168,21 @@ function renderMaster() {
         continue;
       }
 
-      let color = COLOR_BG;
-      if (bubbleContains(lx, ly)) {
-        color = COLOR_GREEN;
-        if (inPolygon(lx, ly, BOLT)) {
-          color = COLOR_GLYPH;
-        }
+      const dx = lx - 64;
+      const dy = ly - 64;
+      const d2 = dx * dx + dy * dy;
+      let color = d2 <= 44.16 * 44.16 ? COLOR_GREEN : COLOR_BG;
+      if (d2 <= 25.6 * 25.6) color = COLOR_BG;
+
+      // The three dark blades match the SVG source. Inverse-rotate the sample
+      // into each rect's untransformed frame and test the rect bounds.
+      for (const angle of [30, 150, 270]) {
+        const rad = (-angle * Math.PI) / 180;
+        const x = dx * Math.cos(rad) - dy * Math.sin(rad) + 64;
+        const y = dx * Math.sin(rad) + dy * Math.cos(rad) + 64;
+        if (x >= 56.064 && x <= 71.936 && y >= 12.8 && y <= 40.96) color = COLOR_BG;
       }
+      if (d2 <= 14.336 * 14.336) color = COLOR_GLYPH;
 
       buf[idx] = color[0];
       buf[idx + 1] = color[1];

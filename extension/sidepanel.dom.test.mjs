@@ -396,6 +396,18 @@ t("with no registry the palette stays shut and every slash line is chat", () => 
   chatEvent({ kind: "done" });
 });
 
+t("the status control announces agent work while a chat is streaming", () => {
+  const statusDot = byId["status-dot"];
+  deliver({ type: "status", connected: true });
+  input.value = "check the active tab";
+  enter();
+  assert.equal(statusDot.classList.contains("working"), true);
+  assert.equal(statusDot.getAttribute("aria-label"), "Agent working");
+  chatEvent({ kind: "done" });
+  assert.equal(statusDot.classList.contains("working"), false);
+  assert.equal(statusDot.getAttribute("aria-label"), "Hub connected");
+});
+
 console.log(`${pass} passed, ${fails.length} failed`);
 for (const f of fails) console.log("FAIL " + f);
 process.exit(fails.length ? 1 : 0);

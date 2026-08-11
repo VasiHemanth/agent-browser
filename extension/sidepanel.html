@@ -8,12 +8,30 @@
 <body>
   <header id="header">
     <span id="logo" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-        <path d="M13.5 2 4 13.2h6.1L9.6 22 20 10.4h-6.4L13.5 2z"/>
+      <svg viewBox="0 0 1000 1000" width="22" height="22">
+        <rect width="1000" height="1000" rx="220" fill="#0B120E"/>
+        <circle cx="500" cy="500" r="345" fill="#22C55E"/>
+        <circle cx="500" cy="500" r="200" fill="#0B120E"/>
+        <rect x="438" y="100" width="124" height="220" fill="#0B120E" transform="rotate(30 500 500)"/>
+        <rect x="438" y="100" width="124" height="220" fill="#0B120E" transform="rotate(150 500 500)"/>
+        <rect x="438" y="100" width="124" height="220" fill="#0B120E" transform="rotate(270 500 500)"/>
+        <circle cx="500" cy="500" r="112" fill="#F5FAF7"/>
       </svg>
     </span>
     <h1 id="title">AgentBrowser</h1>
-    <span id="status-dot" class="dot down" title="hub status"></span>
+    <span id="status-dot" class="dot down" title="hub status" role="status" aria-live="polite" aria-label="Hub disconnected">
+      <svg class="ab-loader" viewBox="0 0 1000 1000" role="img" aria-label="Agent working">
+        <rect width="1000" height="1000" rx="220" fill="#0B120E"/>
+        <circle cx="500" cy="500" r="345" fill="#22C55E"/>
+        <circle cx="500" cy="500" r="200" fill="#0B120E"/>
+        <g class="ab-blades">
+          <rect class="ab-blade" x="438" y="100" width="124" height="220" fill="#0B120E" transform="rotate(30 500 500)"/>
+          <rect class="ab-blade" x="438" y="100" width="124" height="220" fill="#0B120E" transform="rotate(150 500 500)"/>
+          <rect class="ab-blade" x="438" y="100" width="124" height="220" fill="#0B120E" transform="rotate(270 500 500)"/>
+        </g>
+        <circle class="ab-core" cx="500" cy="500" r="112" fill="#F5FAF7"/>
+      </svg>
+    </span>
     <span class="grow"></span>
     <select id="adapter" title="adapter" aria-label="Agent adapter">
       <option value="claude-agent-sdk">claude-agent-sdk</option>
